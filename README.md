@@ -1,1 +1,1 @@
-# My Cool Project
+# GLG Project
