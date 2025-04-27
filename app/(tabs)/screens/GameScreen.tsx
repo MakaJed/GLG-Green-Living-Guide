@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Image, TouchableOpacity, Text, Dimensions, ImageBackground } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -7,10 +7,8 @@ type Direction = 'up' | 'down' | 'left' | 'right';
 
 const PLAYER_WIDTH = 48;
 const PLAYER_HEIGHT = 64;
-
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-
 const PORTAL_POSITION = { x: 10, y: 300 };
 const PORTAL_SIZE = 50;
 
@@ -46,8 +44,9 @@ export default function GameScreen() {
   const [direction, setDirection] = useState<Direction>('down');
   const [frameIndex, setFrameIndex] = useState<number>(0);
   const [isWalking, setIsWalking] = useState<boolean>(false);
-  const [shouldNavigate, setShouldNavigate] = useState<boolean>(false);  // New state to trigger navigation outside render
+  const [shouldNavigate, setShouldNavigate] = useState<boolean>(false);
   const navigation = useNavigation();
+  const movementInterval = useRef<NodeJS.Timeout | null>(null); // NEW: ref to hold the interval ID
 
   const startWalkingAnimation = (dir: Direction) => {
     if (isWalking) return;
@@ -83,20 +82,33 @@ export default function GameScreen() {
       const newPos = { x: newX, y: newY };
 
       if (checkPortalCollision(newPos)) {
-        setShouldNavigate(true);  // Set flag to trigger navigation outside render
+        setShouldNavigate(true);
       }
 
       return newPos;
     });
   };
 
-  // UseEffect to trigger navigation after state update
   useEffect(() => {
     if (shouldNavigate) {
-      navigation.navigate('TeleportScreen' as never);  // Navigate only after state has been updated
-      setShouldNavigate(false);  // Reset the flag
+      navigation.navigate('TeleportScreen' as never);
+      setShouldNavigate(false);
     }
   }, [shouldNavigate, navigation]);
+
+  const handlePressIn = (dx: number, dy: number, dir: Direction) => {
+    movePlayer(dx, dy, dir); // Move immediately on press
+    movementInterval.current = setInterval(() => {
+      movePlayer(dx, dy, dir);
+    }, 500); // Then move every 500ms
+  };
+
+  const handlePressOut = () => {
+    if (movementInterval.current) {
+      clearInterval(movementInterval.current);
+      movementInterval.current = null;
+    }
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -118,12 +130,36 @@ export default function GameScreen() {
       </View>
 
       <View style={styles.controls}>
-        <TouchableOpacity onPress={() => movePlayer(0, -20, 'up')} style={styles.button}><Text>⬆️</Text></TouchableOpacity>
+        <TouchableOpacity
+          onPressIn={() => handlePressIn(0, -20, 'up')}
+          onPressOut={handlePressOut}
+          style={styles.button}
+        >
+          <Text>⬆️</Text>
+        </TouchableOpacity>
         <View style={styles.horizontal}>
-          <TouchableOpacity onPress={() => movePlayer(-20, 0, 'left')} style={styles.button}><Text>⬅️</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => movePlayer(20, 0, 'right')} style={styles.button}><Text>➡️</Text></TouchableOpacity>
+          <TouchableOpacity
+            onPressIn={() => handlePressIn(-20, 0, 'left')}
+            onPressOut={handlePressOut}
+            style={styles.button}
+          >
+            <Text>⬅️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPressIn={() => handlePressIn(20, 0, 'right')}
+            onPressOut={handlePressOut}
+            style={styles.button}
+          >
+            <Text>➡️</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => movePlayer(0, 20, 'down')} style={styles.button}><Text>⬇️</Text></TouchableOpacity>
+        <TouchableOpacity
+          onPressIn={() => handlePressIn(0, 20, 'down')}
+          onPressOut={handlePressOut}
+          style={styles.button}
+        >
+          <Text>⬇️</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
