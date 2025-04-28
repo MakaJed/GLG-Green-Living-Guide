@@ -4,7 +4,8 @@ import { Platform } from 'react-native';
 import GameScreen from './screens/GameScreen';
 import TeleportScreen from './screens/TeleportScreen';
 import TitleScreen from './screens/TitleScreen';
-import LoadSaveScreen from './screens/LoadSaveScreen'
+import LoadSaveScreen from './screens/LoadSaveScreen';
+import Cutscene_1 from './screens/Cutscene_1';
 
 const Stack = createStackNavigator();
 
@@ -20,8 +21,9 @@ const App = () => {
             : CardStyleInterpolators.forFadeFromBottomAndroid,
         }}
       >
-        <Stack.Screen name="LoadSaveScreen" component={LoadSaveScreen} />
+        <Stack.Screen name="Cutscene_1" component={Cutscene_1}/>        
         <Stack.Screen name="TitleScreen" component={TitleScreen} />
+        <Stack.Screen name="LoadSaveScreen" component={LoadSaveScreen} />
         <Stack.Screen name="GameScreen" component={GameScreen} />
         <Stack.Screen name="TeleportScreen" component={TeleportScreen} />
       </Stack.Navigator>
