@@ -1,10 +1,11 @@
-import React from 'react-native';
+import React from 'react';
 import { View, Text, Image, ImageBackground, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type RootStackParamList = {
   LoadSaveScreen: undefined;
+  Cutscene_1: undefined;
   GameScreen: undefined;
 };
 export default function TitleScreen() {
@@ -23,7 +24,7 @@ export default function TitleScreen() {
                 >
                 </ImageBackground>
                 <View style={styles.button_area}>
-                    <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('GameScreen')}>
+                    <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Cutscene_1')}>
                         <Text style={styles.button_text}>Start Game</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('LoadSaveScreen')}>
