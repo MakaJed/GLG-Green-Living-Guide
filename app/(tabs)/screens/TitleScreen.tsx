@@ -6,7 +6,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 type RootStackParamList = {
   LoadSaveScreen: undefined;
   Cutscene_1: undefined;
-  GameScreen: undefined;
 };
 export default function TitleScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();

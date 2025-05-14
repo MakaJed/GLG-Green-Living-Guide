@@ -8,6 +8,7 @@ import TeleportScreen from './screens/TeleportScreen';
 import TitleScreen from './screens/TitleScreen';
 import LoadSaveScreen from './screens/LoadSaveScreen';
 import Cutscene_1 from './screens/Cutscene_1';
+import GameMainMap from './screens/game';
 
 const Stack = createStackNavigator();
 
@@ -41,6 +42,7 @@ export default function App() {
         <Stack.Screen name="Cutscene_1" component={Cutscene_1} />
         <Stack.Screen name="LoadSaveScreen" component={LoadSaveScreen} />
         <Stack.Screen name="GameScreen" component={GameScreen} />
+        <Stack.Screen name='GameMainMap' component={GameMainMap} />
         <Stack.Screen name="TeleportScreen" component={TeleportScreen} />
       </Stack.Navigator>
   );

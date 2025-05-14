@@ -1,0 +1,25 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "allowJs": true,                          // allow importing .js files
+    "checkJs": false,                         // don’t type-check them
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "strict": true,
+    "skipLibCheck": true,                     // skip checking JS/decl files
+    "baseUrl": ".",                           
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",               // include your .js modules
+    "declarations.d.ts",     // if you still use manual declarations
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
+}
