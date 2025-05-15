@@ -22,7 +22,7 @@ import { NPC, TrashType, TRASH_TYPES } from './classes/NPC';
 // constants
 const TILE        = 48;
 const PLAYER_H    = 68;
-const SPEED       = 7;
+const SPEED       = 20;
 const FRAME_HOLD  = 3;
 const FRAME_COUNT = 4;
 const COLS        = 70;
@@ -146,8 +146,9 @@ export default function Game({ navigation }: GameProps) {
       TILE
     );
     
-    // Spawn NPCs with high litter chance (0.05 instead of default 0.005)
-    litterManager.current.spawnInitialNPCs(5, 100, 3);
+    // Spawn NPCs with appropriate litter chance and speed
+    // Use 0.01 (1%) chance per second for littering, and speed of 2
+    litterManager.current.spawnInitialNPCs(5, 0.01, 2);
     
     // Update interval for litter manager
     const updateInterval = setInterval(() => {
@@ -333,14 +334,20 @@ export default function Game({ navigation }: GameProps) {
       const frameToUse = entity.animationFrame || 0;
       
       return (
-        <Image
-          source={playerSheets[direction]}
-          style={{
-            width: TILE * FRAME_COUNT,
-            height: PLAYER_H,
-            transform: [{ translateX: -frameToUse * TILE }],
-          }}
-        />
+        <View style={{
+          width: TILE,
+          height: PLAYER_H,
+          overflow: 'hidden',
+        }}>
+          <Image
+            source={playerSheets[direction]}
+            style={{
+              width: TILE * FRAME_COUNT,
+              height: PLAYER_H,
+              transform: [{ translateX: -frameToUse * TILE }],
+            }}
+          />
+        </View>
       );
     }
     
@@ -399,8 +406,7 @@ export default function Game({ navigation }: GameProps) {
               position: 'absolute',
               left: Math.round(entity.position.x + offX),
               top: Math.round(entity.position.y + offY),
-              width: TILE,
-              // Use player height for NPCs, otherwise use tile size
+              width: isNPC ? undefined : TILE, // Don't set width for NPCs, it's handled in renderEntityImage
               height: isNPC ? PLAYER_H : TILE,
               opacity: entity.opacity ?? 1,
               transform: entity.scale ? [{ scale: entity.scale }] : [],

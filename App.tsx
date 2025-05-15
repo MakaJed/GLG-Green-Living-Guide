@@ -22,6 +22,10 @@ export default function App() {
           headerStyle: {
             backgroundColor: '#4CAF50',
           },
+<<<<<<< HEAD
+          headerShown: false,
+=======
+>>>>>>> c536d63f11bf8dd0bfe36629a21601cdc7751e22
           headerTintColor: '#fff',
           headerTitleStyle: {
             fontWeight: 'bold',

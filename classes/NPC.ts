@@ -166,8 +166,8 @@ export class NPC {
     
     // Choose a random direction biased towards current direction
     let directionIndex;
-    if (Math.random() < 0.7) {
-      // 70% chance to continue in roughly the same direction
+    // 85% chance to continue in roughly the same direction for smoother movement
+    if (Math.random() < 0.85) {
       let baseDir = 0; // default to "up"
       if (this.direction === 'right') baseDir = 2;
       else if (this.direction === 'down') baseDir = 4;
@@ -177,7 +177,7 @@ export class NPC {
       const offset = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
       directionIndex = (baseDir + offset + directions.length) % directions.length;
     } else {
-      // 30% chance to pick a completely random direction
+      // 15% chance to pick a completely random direction
       directionIndex = Math.floor(Math.random() * directions.length);
     }
     
@@ -196,6 +196,7 @@ export class NPC {
 
     // Check for collisions
     let canMove = true;
+    
     if (this.collisionChecker) {
       canMove = !this.collisionChecker(this, nextPosition);
     }
@@ -205,15 +206,22 @@ export class NPC {
       this.position = nextPosition;
 
       // Update direction based on movement
-      if (Math.abs(moveX) > Math.abs(moveY)) {
+      // Use a stronger threshold to prevent flickering between directions
+      if (Math.abs(moveX) > Math.abs(moveY) + 0.01) {
         this.direction = moveX > 0 ? 'right' : 'left';
-      } else if (Math.abs(moveY) > Math.abs(moveX)) {
+      } else if (Math.abs(moveY) > Math.abs(moveX) + 0.01) {
         this.direction = moveY > 0 ? 'down' : 'up';
       }
 
-      // Update animation state
+      // Update animation state - require a minimum movement amount to count as "moving"
       const isMoving = Math.abs(moveX) > 0.01 || Math.abs(moveY) > 0.01;
       this.animationState = isMoving ? 'walking' : 'idle';
+      
+      // Set a small random cooldown for natural-looking movement pauses
+      if (Math.random() < 0.01) {
+        this.movementCooldown = 500 + Math.random() * 1000; // 0.5-1.5 second pause
+        this.animationState = 'idle';
+      }
     } else {
       // If collision detected, set a shorter cooldown and try again with a different direction
       this.movementCooldown = 100; // shorter cooldown (0.1 seconds)

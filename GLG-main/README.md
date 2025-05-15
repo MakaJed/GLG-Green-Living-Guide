@@ -1,1 +1,0 @@
-# GLG Project

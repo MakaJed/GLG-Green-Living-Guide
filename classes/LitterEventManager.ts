@@ -47,21 +47,19 @@ export class LitterEventManager {
     this.npcSpawner = new NPCSpawner(boundaries, mapWidth, mapHeight, tileSize);
   }
 
-  // Spawn a specified number of NPCs
-  spawnInitialNPCs(count: number, litterChance: number = 0.005, moveSpeed: number = 2) {
-    const newNPCs = this.npcSpawner.spawnNPCs(count, litterChance, moveSpeed);
+  // Spawn initial NPCs at game start
+  spawnInitialNPCs(count: number, litterChance: number = 0.005, moveSpeed: number = 1): void {
+    const npcs = this.npcSpawner.spawnNPCs(count, litterChance, moveSpeed);
     
-    // Add NPCs and set their collision checker
-    newNPCs.forEach(npc => {
-      // Set collision checker function from the spawner
-      npc.setCollisionChecker((npc, nextPosition) => {
-        return this.npcSpawner.checkNPCCollision(npc, nextPosition);
-      });
-      
-      this.addNPC(npc);
+    // Register all NPCs with their collision checker
+    npcs.forEach(npc => {
+      npc.setCollisionChecker((npc, nextPos) => 
+        this.npcSpawner.checkNPCCollision(npc, nextPos)
+      );
+      this.npcs.set(npc.id, npc);
     });
     
-    return newNPCs;
+    console.log(`Spawned ${npcs.length} NPCs`);
   }
 
   addNPC(npc: NPC) {
