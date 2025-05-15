@@ -6,4 +6,4 @@ declare module '*.png' {
     const value: any;
     export default value;
   }
-  
+  // declarations.d.ts
