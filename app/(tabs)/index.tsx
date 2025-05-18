@@ -9,6 +9,7 @@ import TitleScreen from './screens/TitleScreen';
 import LoadSaveScreen from './screens/LoadSaveScreen';
 import Cutscene_1 from './screens/Cutscene_1';
 import GameMainMap from './screens/game';
+import Tutorial from './screens/TutorialScreen';
 
 const Stack = createStackNavigator();
 
@@ -43,7 +44,7 @@ export default function App() {
         <Stack.Screen name="LoadSaveScreen" component={LoadSaveScreen} />
         <Stack.Screen name="GameScreen" component={GameScreen} />
         <Stack.Screen name='GameMainMap' component={GameMainMap} />
-        <Stack.Screen name="TeleportScreen" component={TeleportScreen} />
+
       </Stack.Navigator>
   );
 }

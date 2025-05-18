@@ -8,13 +8,17 @@ import {
     TouchableOpacity,
     Animated,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type RootStackParamList = {
     GameMainMap: undefined;
-    TutorialBattle: undefined;
+    Tutorial: undefined;
 };
+
+type CutsceneProps = {
+  navigation: NavigationProp<RootStackParamList>;
+}
 
 // Animation constants for sprite animations
 const SPRITE_FRAME_DURATION = 200; // milliseconds per frame
@@ -43,7 +47,7 @@ export default function Cutscene_1() {
         { name: "Niku", message: "Right here!", action: "niku_shows_device" },
         { name: "Rheeyu", message: "Perfect. Let's teach this trash heap a lesson, and show our new friend here how Eco Buddies work.", action: "both_turn_to_player" },
         { name: "Niku", message: "Hey! You there! Want to help us? We'll show you how to use Eco Buddies.", action: "niku_smiles" },
-        { name: "", message: "[Tutorial Begins: The game pauses slightly to give control to the player.]", action: "tutorial_begins" },
+        { name: "", message: "", action: "tutorial_begins" },
         { name: "Rheeyu", message: "Eco Buddies are eco-friendly companions with special powers. Use them wisely to defeat trash monsters.", action: "tutorial_voiceover" },
         { name: "Niku", message: "Each Eco Buddy has a unique skill! Recycle, reuse, or even reduce attacks! Let's test one out.", action: "tutorial_end" },
     ];
@@ -58,6 +62,7 @@ export default function Cutscene_1() {
     const [blackScreenVisible, setBlackScreenVisible] = useState(true);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [bufferVisible, setBufferVisible] = useState(false);
+    const animationValue = useRef(new Animated.Value(0)).current;
     
     // Sprite position and animation states
     const npcPosition = useRef(new Animated.Value(250)).current;
@@ -193,7 +198,7 @@ export default function Cutscene_1() {
             case 'tutorial_end':
                 // Set a timer to navigate to the tutorial battle after this dialog
                 setTimeout(() => {
-                    navigation.navigate('TutorialBattle');
+                    navigation.navigate('Tutorial');
                 }, 2000);
                 break;
                 
@@ -232,7 +237,7 @@ export default function Cutscene_1() {
         if (currentIndex < dialog.length - 1) {
             setCurrentIndex(currentIndex + 1);
         } else {
-            navigation.navigate('TutorialBattle');
+            navigation.navigate('Tutorial');
         }
     };
 
@@ -336,8 +341,8 @@ export default function Cutscene_1() {
                             position: "absolute",
                             bottom: 260,
                             left: 250,
-                            width: 44,
-                            height: 48,
+                            width: 64,
+                            height: 68,
                             opacity: trashMonsterOpacity
                         }
                     ]}
