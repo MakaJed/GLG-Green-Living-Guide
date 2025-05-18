@@ -24,7 +24,7 @@ export default function Cutscene_1() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
     // New dialog based on the provided script
-    const dialog = [
+      const dialog = [
         { name: "NPC", message: "Hmph... whatever.", action: "npc_throws_trash" },
         { name: "", message: "*tosses trash on the ground*", action: "npc_walks_away" },
         { name: "???", message: "Hey! You just threw your trash on the ground!", action: "rheeyu_enters" },
@@ -32,7 +32,7 @@ export default function Cutscene_1() {
         { name: "Rheeyu", message: "That's NOT how we treat our planet! Littering pollutes our environment and harms wildlife!", action: "" },
         { name: "NPC", message: "Pfft, it's just one wrapper. Chill out.", action: "" },
         { name: "Rheeyu", message: "One wrapper today, a mountain tomorrow. Every piece counts.", action: "" },
-        { name: "", message: "Suddenly, the ground shakes slightly. A green ooze bubbles up from the trash. A monstrous shape begins to form from the garbage.", action: "trash_forming" },
+        { name: "???", message: "RAAAAGHHH!!!", action: "trash_forming" },
         { name: "Trash Monster", message: "More trash... more power... Humans are careless... and I AM THE RESULT!", action: "trash_monster_appears" },
         { name: "", message: "Trash Monster fully spawns, towering and twitching.", action: "" },
         { name: "Rheeyu", message: "What?! A Trash Monster?!", action: "" },
@@ -101,12 +101,12 @@ export default function Cutscene_1() {
                 
             case 'npc_walks_away':
                 Animated.timing(npcPosition, {
-                    toValue: 500,
+                    toValue: 400,
                     duration: 2000,
                     useNativeDriver: true
                 }).start();
                 Animated.timing(npcOpacity, {
-                    toValue: 0,
+                    toValue: 100,
                     duration: 1500,
                     useNativeDriver: true
                 }).start();
@@ -154,18 +154,29 @@ export default function Cutscene_1() {
                         useNativeDriver: true
                     })
                 ]).start();
+                // Start fading in the trash monster at the trash position
+                Animated.timing(trashMonsterOpacity, {
+                    toValue: 0.5,
+                    duration: 80,
+                    useNativeDriver: true
+                }).start();
+                Animated.timing(trashOpacity, {
+                    toValue: 0,
+                    duration: 10,
+                    useNativeDriver: true
+                }).start();
                 break;
                 
             case 'trash_monster_appears':
                 Animated.parallel([
                     Animated.timing(trashMonsterScale, {
                         toValue: 1,
-                        duration: 1500,
+                        duration: 100,
                         useNativeDriver: true
                     }),
                     Animated.timing(trashMonsterOpacity, {
                         toValue: 1,
-                        duration: 1200,
+                        duration: 120,
                         useNativeDriver: true
                     })
                 ]).start();
@@ -173,7 +184,7 @@ export default function Cutscene_1() {
                 
             case 'niku_enters':
                 Animated.timing(nikuPosition, {
-                    toValue: 350,
+                    toValue: 150,
                     duration: 800,
                     useNativeDriver: true
                 }).start();
@@ -265,8 +276,8 @@ export default function Cutscene_1() {
                             ],
                             opacity: npcOpacity,
                             left: -20,
-                            width: 64,
-                            height: 64,
+                            width: 44,
+                            height: 68,
                         }
                     ]}
                 />
@@ -289,9 +300,9 @@ export default function Cutscene_1() {
                             transform: [
                                 { translateX: rheeyuPosition }
                             ],
-                            left: -60,
-                            width: 40,
-                            height: 58,
+                            left: -100,
+                            width: 44,
+                            height: 68,
                         }
                     ]}
                 />
@@ -306,8 +317,8 @@ export default function Cutscene_1() {
                                 { translateX: nikuPosition }
                             ],
                             left: -30,
-                            width: 40,
-                            height: 58,
+                            width: 44,
+                            height: 68,
                         }
                     ]}
                 />
@@ -322,6 +333,11 @@ export default function Cutscene_1() {
                                 { scale: trashMonsterScale },
                                 { translateX: shakeAnimation }
                             ],
+                            position: "absolute",
+                            bottom: 260,
+                            left: 250,
+                            width: 44,
+                            height: 48,
                             opacity: trashMonsterOpacity
                         }
                     ]}
@@ -374,7 +390,7 @@ export default function Cutscene_1() {
                             </ImageBackground>
 
                             {showClickHint && (
-                                <Text style={styles.clickHint}>Press to Continue...</Text>
+                                <Text style={styles.clickHint}>Click the dialog box!</Text>
                             )}
                         </>
                     )}
@@ -461,9 +477,9 @@ const styles = StyleSheet.create({
         right: 150,
     },
     backgroundimg_dialoguebox: {
-        width: 375,
+        width: 395,
         height: 200,
-        margin: 50,
+        margin: 40,
         position: "absolute",
         bottom: 0,
         alignItems: "center",
@@ -477,10 +493,10 @@ const styles = StyleSheet.create({
     },
     character_name: {
         fontFamily: "PixelifySans-Bold",
-        fontSize: 30,
-        marginBottom: 10,
-        marginHorizontal: 40,
-        marginTop: 25,
+        fontSize: 23,
+        marginBottom: 5,
+        marginHorizontal: 50,
+        marginTop: 30,
         textAlign: "left",
         alignSelf: "flex-start",
         top: 0,
@@ -488,27 +504,26 @@ const styles = StyleSheet.create({
     },
     text_dialogue: {
         textAlign: "left",
-        fontFamily: "Arial",
+        fontFamily: "Pixelify Sans",
         justifyContent: "flex-start",
         alignSelf: "flex-start",
         fontSize: 18,
-        marginLeft: 40,
-        marginRight: 25,
+        marginHorizontal: 50,
         marginTop: 25,
         marginBottom: 10,
     },
     clickHint: {
         position: 'absolute',
-        bottom: 90,
+        bottom: 80,
         alignSelf: 'center',
         fontSize: 18,
         color: 'white',
-        backgroundColor: 'rgb(17, 16, 16)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 8,
-        fontFamily: 'Arial',
+        fontFamily: 'PixelifySans-Bold',
         zIndex: 11,
-        opacity: 0.2,
+        opacity: 0.30,
     }
 });

@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
+import { RootStackParamList } from '../../types';
 import { RouteProp } from '@react-navigation/native';
 
 type Props = {
@@ -19,15 +19,15 @@ type Props = {
 const pets = [
   {
     name: 'Owlleaf',
-    image: require('../../assets/sprites/Companions/Owlleaf.png'),
+    image: require('../../../assets/images/pet_sprite/owlleaf.png'),
   },
   {
     name: 'Cubble',
-    image: require('../../assets/sprites/Companions/Cubble.png'),
+    image: require('../../../assets/images/pet_sprite/cubble.png'),
   },
   {
     name: 'Meowmblebee',
-    image: require('../../assets/sprites/Companions/Meowmblebee.png'),
+    image: require('../../../assets/images/pet_sprite/meowmblebee.png'),
   },
 ];
 

@@ -102,7 +102,7 @@ export default function TeleportScreen() {
     <View style={{ flex: 1 }}>
       <View style={styles.gameArea}>
         <ImageBackground
-          source={require('../../../assets/images/backgrounds/battleBackground.png')}
+          source={require('../../../assets/images/backgrounds/background.png')}
           style={styles.background}
           resizeMode="cover"
         >

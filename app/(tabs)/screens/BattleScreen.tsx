@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
-import { BattleUI } from '../../components/BattleUI';
-import { Creature, EcoType } from '../../classes/battle';
-import { RECYCLABLE_SKILLS, COMPOSTABLE_SKILLS, HAZARDOUS_SKILLS, TrashMonsterFactory } from '../../classes/monsters';
+import { RootStackParamList } from '../../types';
+import { BattleUI } from '../../../components/BattleUI';
+import { Creature, EcoType } from '../../../classes/battle';
+import { RECYCLABLE_SKILLS, COMPOSTABLE_SKILLS, HAZARDOUS_SKILLS, TrashMonsterFactory } from '../../../classes/monsters';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Battle'>;
 
