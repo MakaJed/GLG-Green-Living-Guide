@@ -1,8 +1,8 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import PetSelectionScreen from './app/(tabs)/PetSelectionScreen';
-import BattleScreen from './app/(tabs)/BattleScreen';
-import { RootStackParamList } from './app/types';
+import PetSelectionScreen from './app/(tabs)/screens/PetSelectionScreen';
+import BattleScreen from './app/(tabs)/screens/BattleScreen';
+import { RootStackParamList } from './types';
 import Game from './game';
 import { LogBox } from 'react-native';
 
@@ -22,10 +22,6 @@ export default function App() {
           headerStyle: {
             backgroundColor: '#4CAF50',
           },
-<<<<<<< HEAD
-          headerShown: false,
-=======
->>>>>>> c536d63f11bf8dd0bfe36629a21601cdc7751e22
           headerTintColor: '#fff',
           headerTitleStyle: {
             fontWeight: 'bold',

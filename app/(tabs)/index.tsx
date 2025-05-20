@@ -1,17 +1,22 @@
 import React from 'react';
-import { useFonts } from 'expo-font';
 import { View, ActivityIndicator, Platform } from 'react-native';
-import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
+import { useFonts } from 'expo-font';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { screens, RootStackParamList } from './types';
 
-import GameScreen from './screens/GameScreen';
-import TeleportScreen from './screens/TeleportScreen';
-import TitleScreen from './screens/TitleScreen';
-import LoadSaveScreen from './screens/LoadSaveScreen';
-import Cutscene_1 from './screens/Cutscene_1';
-import GameMainMap from './screens/game';
-import Tutorial from './screens/TutorialScreen';
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
+
+type Screen = {
+  name: keyof RootStackParamList;
+  component: React.ComponentType<any>;
+};
+
+const typedScreens: Screen[] = screens;
+
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -29,21 +34,20 @@ export default function App() {
 
   return (
       <Stack.Navigator
+        initialRouteName="TitleScreen"
         screenOptions={{
           headerShown: false,
-          animation: 'fade',
           gestureEnabled: false,
-          cardStyleInterpolator:
-            Platform.OS === 'ios'
-              ? CardStyleInterpolators.forHorizontalIOS
-              : CardStyleInterpolators.forFadeFromBottomAndroid,
+          animation: 'fade',
         }}
       >
-        <Stack.Screen name="TitleScreen" component={TitleScreen} />
-        <Stack.Screen name="Cutscene_1" component={Cutscene_1} />
-        <Stack.Screen name="LoadSaveScreen" component={LoadSaveScreen} />
-        <Stack.Screen name="GameScreen" component={GameScreen} />
-        <Stack.Screen name='GameMainMap' component={GameMainMap} />
+        {typedScreens.map(({ name, component }) => (
+          <Stack.Screen
+            key={name}
+            name={name}
+            component={component}
+          />
+        ))}
 
       </Stack.Navigator>
   );

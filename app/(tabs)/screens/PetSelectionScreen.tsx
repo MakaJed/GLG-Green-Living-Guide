@@ -8,11 +8,12 @@ import {
   Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../types';
+import { RootStackParamList } from '../types';
 import { RouteProp } from '@react-navigation/native';
 
+type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'PetSelection'>;
+  navigation: NavigationProps;
   route: RouteProp<RootStackParamList, 'PetSelection'>;
 };
 

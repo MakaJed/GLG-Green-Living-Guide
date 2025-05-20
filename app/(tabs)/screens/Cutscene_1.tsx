@@ -12,20 +12,17 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type RootStackParamList = {
-    GameMainMap: undefined;
-    Tutorial: undefined;
+    Game: undefined;
+    TutorialScreen: undefined;
+    Cutscene_1: undefined;
 };
-
-type CutsceneProps = {
-  navigation: NavigationProp<RootStackParamList>;
-}
 
 // Animation constants for sprite animations
 const SPRITE_FRAME_DURATION = 200; // milliseconds per frame
 const SPRITE_ANIMATION_STEPS = 4; // Number of animation frames
 
 export default function Cutscene_1() {
-    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Cutscene_1'>>();
 
     // New dialog based on the provided script
       const dialog = [
@@ -198,7 +195,7 @@ export default function Cutscene_1() {
             case 'tutorial_end':
                 // Set a timer to navigate to the tutorial battle after this dialog
                 setTimeout(() => {
-                    navigation.navigate('Tutorial');
+                    navigation.navigate('TutorialScreen');
                 }, 2000);
                 break;
                 
@@ -237,7 +234,7 @@ export default function Cutscene_1() {
         if (currentIndex < dialog.length - 1) {
             setCurrentIndex(currentIndex + 1);
         } else {
-            navigation.navigate('Tutorial');
+            navigation.navigate('TutorialScreen');
         }
     };
 

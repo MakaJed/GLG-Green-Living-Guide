@@ -1,12 +1,18 @@
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types';
+import { RouteProp } from '@react-navigation/native';
 import { BattleUI } from '../../../components/BattleUI';
 import { Creature, EcoType } from '../../../classes/battle';
 import { RECYCLABLE_SKILLS, COMPOSTABLE_SKILLS, HAZARDOUS_SKILLS, TrashMonsterFactory } from '../../../classes/monsters';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Battle'>;
+
+type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
+type Props = {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Battle'>;
+  route: RouteProp<RootStackParamList, 'Battle'>;
+};
 
 // Define pet stats and skills
 const PET_BASE_STATS = {

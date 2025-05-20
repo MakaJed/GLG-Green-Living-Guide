@@ -1,21 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  Image,
   Platform,
 } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types';
 import { RouteProp } from '@react-navigation/native';
+import { BattleUI } from '../../../components/BattleUI';
+import { Creature, EcoType } from '../../../classes/battle';
+import {
+  RECYCLABLE_SKILLS,
+  COMPOSTABLE_SKILLS,
+  HAZARDOUS_SKILLS,
+  TrashMonsterFactory,
+} from '../../../classes/monsters';
 
-
-type TutorialScreenRouteProp = RouteProp<RootStackParamList, 'Tutorial'>;
-
+type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
 type Props = {
-    route: TutorialScreenRouteProp;
-    navigation: NativeStackScreenProps<RootStackParamList, 'Tutorial'>['navigation'];
+  navigation: NavigationProps;
+  route: RouteProp<RootStackParamList, 'TutorialScreen'>;
 };
 
 const PIXEL_FONT = Platform.select({
@@ -23,40 +30,144 @@ const PIXEL_FONT = Platform.select({
   android: 'monospace',
 });
 
-export default function TutorialScreen({ navigation, route }: Props) {
-    const { onTutorialComplete } = route.params;
+const pets = [
+  {
+    name: 'Owlleaf',
+    image: require('../../../assets/images/pet_sprite/owlleaf.png'),
+  },
+  {
+    name: 'Cubble',
+    image: require('../../../assets/images/pet_sprite/cubble.png'),
+  },
+  {
+    name: 'Meowmblebee',
+    image: require('../../../assets/images/pet_sprite/meowmblebee.png'),
+  },
+];
 
-    const finishTutorial = () => {
-      if (onTutorialComplete) {
-        onTutorialComplete(); // Notify Cutscene to resume dialog
-      }
+const PET_BASE_STATS = {
+  hp: 120,
+  mp: 100,
+  attack: 18,
+  defense: 12,
+  speed: 15,
+  resistance: 12,
+};
 
-      navigation.navigate('PetSelection', {
-        enemy: 'canstruct',
-      });
-    };
+const PET_CONFIGURATIONS = {
+  Owlleaf: {
+    type: EcoType.COMPOSTABLE,
+    skills: [
+      COMPOSTABLE_SKILLS.compostBlast,
+      COMPOSTABLE_SKILLS.organicWrap,
+      RECYCLABLE_SKILLS.paperCut,
+    ],
+  },
+  Cubble: {
+    type: EcoType.RECYCLABLE,
+    skills: [
+      RECYCLABLE_SKILLS.plasticCrush,
+      RECYCLABLE_SKILLS.paperCut,
+      COMPOSTABLE_SKILLS.organicWrap,
+    ],
+  },
+  Meowmblebee: {
+    type: EcoType.HAZARDOUS,
+    skills: [
+      HAZARDOUS_SKILLS.toxicSpill,
+      HAZARDOUS_SKILLS.chemicalBurn,
+      RECYCLABLE_SKILLS.plasticCrush,
+    ],
+  },
+};
 
+export default function TutorialScreen({ route }: Props) {
+  const onTutorialComplete = route.params?.onTutorialComplete ?? (() => {});
+  const [step, setStep] = useState<'intro' | 'select' | 'battle' | 'done'>('intro');
+  const [selected, setSelected] = useState<string | null>(null);
 
-    const handleContinue = () => {
-        navigation.navigate('PetSelection', {
-        enemy: 'canstruct', // You can change this dynamically or randomly if needed
-        });
-    };
+  const enemy = TrashMonsterFactory.createCanstruct(1);
 
-  return (
-    <View style={styles.container}>
+  const handleStartTutorial = () => setStep('select');
+
+  const handleStartBattle = () => {
+    if (selected) setStep('battle');
+  };
+
+  const handleBattleEnd = (won: boolean) => {
+    setStep('done');
+    onTutorialComplete?.();
+  };
+
+  const renderIntro = () => (
+    <>
       <Text style={styles.title}>WELCOME TO ECO BATTLE!</Text>
       <Text style={styles.description}>
         Choose your eco-pet and fight against trash monsters threatening our environment.
-        Each pet has special skills based on their eco-type: Compostable, Recyclable, or Hazardous.
       </Text>
       <Text style={styles.description}>
-        Use strategy to win battles, learn about waste classification, and help save the planet!
+        Each pet has special skills based on their eco-type. Let’s begin!
       </Text>
-
-      <TouchableOpacity style={styles.startBtn} onPress={finishTutorial}>
+      <TouchableOpacity style={styles.startBtn} onPress={handleStartTutorial}>
         <Text style={styles.startText}>START</Text>
       </TouchableOpacity>
+    </>
+  );
+
+  const renderPetSelection = () => (
+    <>
+      <Text style={styles.title}>CHOOSE YOUR PET</Text>
+      <View style={styles.row}>
+        {pets.map((p) => (
+          <TouchableOpacity
+            key={p.name}
+            style={[
+              styles.petCard,
+              selected === p.name && styles.selectedCard,
+            ]}
+            onPress={() => setSelected(p.name)}
+          >
+            <Image source={p.image} style={styles.petImage} />
+            <Text style={styles.petName}>{p.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <TouchableOpacity
+        style={[styles.startBtn, !selected && styles.disabledBtn]}
+        onPress={handleStartBattle}
+        disabled={!selected}
+      >
+        <Text style={styles.startText}>
+          {selected ? 'START TUTORIAL BATTLE' : 'SELECT A PET'}
+        </Text>
+      </TouchableOpacity>
+    </>
+  );
+
+  const renderBattle = () => {
+    const petName = selected!;
+    const config = PET_CONFIGURATIONS[petName as keyof typeof PET_CONFIGURATIONS];
+    const playerPet = new Creature(petName, config.type, 1, PET_BASE_STATS, config.skills);
+
+    return (
+      <BattleUI
+        playerPet={playerPet}
+        enemy={enemy}
+        onBattleEnd={handleBattleEnd}
+      />
+    );
+  };
+
+  const renderDone = () => (
+    <Text style={styles.title}>Tutorial Complete!</Text>
+  );
+
+  return (
+    <View style={styles.container}>
+      {step === 'intro' && renderIntro()}
+      {step === 'select' && renderPetSelection()}
+      {step === 'battle' && renderBattle()}
+      {step === 'done' && renderDone()}
     </View>
   );
 }
@@ -94,5 +205,33 @@ const styles = StyleSheet.create({
     fontFamily: PIXEL_FONT,
     color: '#fff',
     fontSize: 16,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 30,
+  },
+  petCard: {
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#205c3b',
+    padding: 10,
+    borderRadius: 8,
+  },
+  selectedCard: {
+    backgroundColor: 'rgba(32,92,59,0.2)',
+  },
+  petImage: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+  },
+  petName: {
+    fontFamily: PIXEL_FONT,
+    marginTop: 5,
+  },
+  disabledBtn: {
+    backgroundColor: '#a5d6a7',
   },
 });
