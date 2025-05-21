@@ -5,6 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type RootStackParamList = {
   TitleScreen: undefined;
+  GameMainMap: undefined;
 };
 
 export default function LoadSaveScreen() {
@@ -29,7 +30,7 @@ export default function LoadSaveScreen() {
 
             <View style={styles.smaller_container}>
               <View style={{ marginTop: 20 }}>
-                <TouchableOpacity style={styles.button}>
+                <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('GameMainMap')}>
                   <Text style={styles.button_text}>Save #1</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.button}>

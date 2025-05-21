@@ -15,7 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Font from 'expo-font';
 
 type RootStackParamList = {
-    Game: undefined;
+    GameMainMap: undefined;
     TutorialScreen: undefined;
     Cutscene_1: undefined;
 };
@@ -380,7 +380,7 @@ export default function Cutscene_1() {
         if (currentIndex < dialog.length - 1) {
             setCurrentIndex(currentIndex + 1);
         } else {
-            navigation.navigate('TutorialScreen');
+            navigation.navigate('GameMainMap');
         }
     };
 
