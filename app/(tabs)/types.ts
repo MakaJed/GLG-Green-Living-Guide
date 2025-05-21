@@ -1,6 +1,4 @@
 import { NativeStackNavigationOptions, NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
-import GameScreen from './screens/GameScreen';
-import TeleportScreen from './screens/TeleportScreen';
 import TitleScreen from './screens/TitleScreen';
 import LoadSaveScreen from './screens/LoadSaveScreen';
 import Cutscene_1 from './screens/Cutscene_1';
@@ -33,9 +31,7 @@ export const screens: Screen[] = [
   { name: 'TitleScreen', component: TitleScreen },
   { name: 'Cutscene_1', component: Cutscene_1},
   { name: 'LoadSaveScreen', component: LoadSaveScreen },
-  { name: 'GameScreen', component: GameScreen },
   { name: 'GameMainMap', component: Game },
-  { name: 'TeleportScreen', component: TeleportScreen },
   { name: 'TutorialScreen', component: TutorialScreen },
   { name: 'Home', component: Game },
   {

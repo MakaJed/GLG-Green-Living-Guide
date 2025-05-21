@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     width: SCREEN_W,
     height: SCREEN_H,
     resizeMode: 'cover',
-    bottom: 0, // Background offset
+    bottom: 0,
   },
   topHud: {
     marginTop: 20,
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     resizeMode: 'contain',
-    top: 160, 
+    top: 200, 
     left: 30,
   },
   battleLog: {

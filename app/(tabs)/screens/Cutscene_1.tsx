@@ -2,14 +2,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
-    Image,
     StyleSheet,
     ImageBackground,
     TouchableOpacity,
     Animated,
+    ImageSourcePropType,
+    Easing,
+    Image,
 } from 'react-native';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as Font from 'expo-font';
 
 type RootStackParamList = {
     Game: undefined;
@@ -18,196 +21,339 @@ type RootStackParamList = {
 };
 
 // Animation constants for sprite animations
-const SPRITE_FRAME_DURATION = 200; // milliseconds per frame
+const SPRITE_FRAME_DURATION = 100; // milliseconds per frame
 const SPRITE_ANIMATION_STEPS = 4; // Number of animation frames
+const FRAME_WIDTH = 64; // width of each frame for NPC, Rheeyu, Niku walking sprites
+const FRAME_HEIGHT = 100;
+
+// Standing sprite dimensions
+const STANDING_SPRITE_WIDTH = 64; // width for standing sprites
+const STANDING_SPRITE_HEIGHT = 100; // height for standing sprites
+
+// Load fonts
+const loadFonts = async () => {
+    await Font.loadAsync({
+        'Stardew Valley': require('../../../assets/fonts/Stardew_Valley.otf'),
+    });
+};
 
 export default function Cutscene_1() {
+    const [fontsLoaded, setFontsLoaded] = useState(false);
+
+    useEffect(() => {
+        loadFonts().then(() => {
+            setFontsLoaded(true);
+        });
+    }, []);
+
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Cutscene_1'>>();
 
-    // New dialog based on the provided script
-      const dialog = [
-        { name: "NPC", message: "Hmph... whatever.", action: "npc_throws_trash" },
-        { name: "", message: "*tosses trash on the ground*", action: "npc_walks_away" },
-        { name: "???", message: "Hey! You just threw your trash on the ground!", action: "rheeyu_enters" },
-        { name: "NPC", message: "...Oh great. Here comes Gardener Rheeyu...", action: "rheeyu_approaches" },
-        { name: "Rheeyu", message: "That's NOT how we treat our planet! Littering pollutes our environment and harms wildlife!", action: "" },
-        { name: "NPC", message: "Pfft, it's just one wrapper. Chill out.", action: "" },
-        { name: "Rheeyu", message: "One wrapper today, a mountain tomorrow. Every piece counts.", action: "" },
-        { name: "???", message: "RAAAAGHHH!!!", action: "trash_forming" },
-        { name: "Trash Monster", message: "More trash... more power... Humans are careless... and I AM THE RESULT!", action: "trash_monster_appears" },
-        { name: "", message: "Trash Monster fully spawns, towering and twitching.", action: "" },
-        { name: "Rheeyu", message: "What?! A Trash Monster?!", action: "" },
-        { name: "???", message: "!!!", action: "niku_enters" },
-        { name: "???", message: "Rheeyu! What's going on?! I saw weird energy readings from here!", action: "" },
-        { name: "Rheeyu", message: "Niku! A careless litterbug tossed his trash, and it summoned this thing!", action: "" },
-        { name: "Rheeyu", message: "Do you have the Eco Buddies with you?", action: "rheeyu_to_niku" },
-        { name: "Niku", message: "Right here!", action: "niku_shows_device" },
-        { name: "Rheeyu", message: "Perfect. Let's teach this trash heap a lesson, and show our new friend here how Eco Buddies work.", action: "both_turn_to_player" },
-        { name: "Niku", message: "Hey! You there! Want to help us? We'll show you how to use Eco Buddies.", action: "niku_smiles" },
-        { name: "", message: "", action: "tutorial_begins" },
-        { name: "Rheeyu", message: "Eco Buddies are eco-friendly companions with special powers. Use them wisely to defeat trash monsters.", action: "tutorial_voiceover" },
-        { name: "Niku", message: "Each Eco Buddy has a unique skill! Recycle, reuse, or even reduce attacks! Let's test one out.", action: "tutorial_end" },
+    // Dialog script
+    const dialog = [
+        { name: "NPC", message: "Hmph... whatever.", action: "npc_throws_trash", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
+        { name: "", message: "[NPC tosses trash on the ground]", action: "npc_walks_away", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
+        { name: "???", message: "Hey! You just threw your trash on the ground!", action: "rheeyu_enters", portrait: require('../../../assets/images/portraits/Dialog_Rheeyu_Sprite.png') },
+        { name: "", message: "[You, the player, enter the scene.]", action: "player_enters", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
+        { name: "NPC", message: "...Oh great. Here comes Gardener Rheeyu...", action: "rheeyu_approaches", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
+        { name: "Rheeyu", message: "That's NOT how we treat our planet! Littering pollutes our environment and harms wildlife!", action: "rheeyu_stand", portrait: require('../../../assets/images/portraits/Dialog_Rheeyu_Sprite.png') },
+        { name: "NPC", message: "Pfft, it's just one wrapper. Chill out.", action: "npc_stand", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
+        { name: "Rheeyu", message: "One wrapper today, a mountain tomorrow. Every piece counts.", action: "rheeyu_stand", portrait: require('../../../assets/images/portraits/Dialog_Rheeyu_Sprite.png') },
+        { name: "???", message: "RAAAAGHHH!!!", action: "trash_forming", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
+        { name: "Trash Monster", message: "More trash... more power... Humans are careless... and I AM THE RESULT!", action: "trash_monster_appears", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
+        { name: "", message: "[Trash Monster fully spawns, towering and twitching.]", action: "", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
+        { name: "Rheeyu", message: "What?! A Trash Monster?!", action: "rheeyu_shocked", portrait: require('../../../assets/images/portraits/Dialog_Rheeyu_Sprite.png') },
+        { name: "???", message: "!!!", action: "niku_enters", portrait: require('../../../assets/images/portraits/Dialog_Niku_Sprite.png') },
+        { name: "???", message: "Rheeyu! What's going on?! I saw weird energy readings from here!", action: "niku_stand", portrait: require('../../../assets/images/portraits/Dialog_Niku_Sprite.png') },
+        { name: "Rheeyu", message: "Niku! A careless litterbug tossed his trash, and it summoned this thing!", action: "rheeyu_stand", portrait: require('../../../assets/images/portraits/Dialog_Rheeyu_Sprite.png') },
+        { name: "Rheeyu", message: "Do you have the Eco Buddies with you?", action: "rheeyu_to_niku", portrait: require('../../../assets/images/portraits/Dialog_Rheeyu_Sprite.png') },
+        { name: "Niku", message: "Right here!", action: "niku_shows_device", portrait: require('../../../assets/images/portraits/Dialog_Niku_Sprite.png') },
+        { name: "Rheeyu", message: "Perfect. Let's teach this trash heap a lesson, and show our new friend here how Eco Buddies work.", action: "both_turn_to_player", portrait: require('../../../assets/images/portraits/Dialog_Rheeyu_Sprite.png') },
+        { name: "Niku", message: "Hey! You there! Want to help us? We'll show you how to use Eco Buddies.", action: "niku_smiles", portrait: require('../../../assets/images/portraits/Dialog_Niku_Sprite.png') },
+        { name: "Rheeyu", message: "Eco Buddies are eco-friendly companions with special powers. Use them wisely to defeat trash monsters.", action: "tutorial_voiceover", portrait: require('../../../assets/images/portraits/Dialog_Rheeyu_Sprite.png') },
+        { name: "Niku", message: "Each Eco Buddy has a unique skill! Recycle, reuse, or even reduce attacks! Let's test one out.", action: "tutorial_end", portrait: require('../../../assets/images/portraits/Dialog_Niku_Sprite.png') },
     ];
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const introFadeAnim = useRef(new Animated.Value(1)).current;
 
-    // Animation states
     const [hasStarted, setHasStarted] = useState(false);
     const [showDialogue, setShowDialogue] = useState(false);
-    const [blackScreenVisible, setBlackScreenVisible] = useState(true);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [bufferVisible, setBufferVisible] = useState(false);
-    const animationValue = useRef(new Animated.Value(0)).current;
-    
-    // Sprite position and animation states
+    const [blackScreenVisible, setBlackScreenVisible] = useState(true);
+
+    // Animated positions and opacity for characters
     const npcPosition = useRef(new Animated.Value(250)).current;
     const npcOpacity = useRef(new Animated.Value(1)).current;
     const rheeyuPosition = useRef(new Animated.Value(-100)).current;
     const nikuPosition = useRef(new Animated.Value(-100)).current;
+    const playerPosition = useRef(new Animated.Value(600)).current;
     const trashOpacity = useRef(new Animated.Value(0)).current;
+    const paperTrashOpacity = useRef(new Animated.Value(0)).current;
     const trashMonsterScale = useRef(new Animated.Value(0.2)).current;
     const trashMonsterOpacity = useRef(new Animated.Value(0)).current;
     const shakeAnimation = useRef(new Animated.Value(0)).current;
-    
+
     // Sprite animation frame state
     const [spriteFrame, setSpriteFrame] = useState(0);
+    const [animateNpc, setAnimateNpc] = useState(false);
+    const [animateRheeyu, setAnimateRheeyu] = useState(false);
+    const [animateNiku, setAnimateNiku] = useState(false);
+    const [animatePlayer, setAnimatePlayer] = useState(false);
+
+    // Character sprite sources state (default to standing sprites)
+    const [npcSprite, setNpcSprite] = useState<ImageSourcePropType>(require('../../../assets/images/npc_sprite/RightNPCStand.png'));
+    const [rheeyuSprite, setRheeyuSprite] = useState<ImageSourcePropType>(require('../../../assets/images/npc_sprite/RightRheeyuStand.png'));
+    const [nikuSprite, setNikuSprite] = useState<ImageSourcePropType>(require('../../../assets/images/npc_sprite/RightNikuStand.png'));
+    const [playerSprite, setPlayerSprite] = useState<ImageSourcePropType>(require('../../../assets/images/player_sprite/LeftPlayerStand.png'));
+
     const spriteAnimationTimer = useRef<NodeJS.Timeout | null>(null);
 
-    // Start sprite animation cycle
     useEffect(() => {
         if (showDialogue) {
-            spriteAnimationTimer.current = setInterval(() => {
-                setSpriteFrame(prev => (prev + 1) % SPRITE_ANIMATION_STEPS);
-            }, SPRITE_FRAME_DURATION);
+            if (animateNpc || animateRheeyu || animateNiku || animatePlayer) {
+                spriteAnimationTimer.current = setInterval(() => {
+                    setSpriteFrame(prev => (prev + 1) % SPRITE_ANIMATION_STEPS);
+                }, SPRITE_FRAME_DURATION);
+            } else {
+                setSpriteFrame(0);
+            }
         }
-        
         return () => {
             if (spriteAnimationTimer.current) {
                 clearInterval(spriteAnimationTimer.current);
             }
         };
-    }, [showDialogue]);
+    }, [showDialogue, animateNpc, animateRheeyu, animateNiku, animatePlayer]);
 
-    // Execute action animations based on dialog cues
+    const handleNpcWalkAway = () => {
+        setNpcSprite(require('../../../assets/images/npc_sprite/RightNPC3.png'));
+        setAnimateNpc(true);
+        
+        Animated.timing(npcPosition, {
+            toValue: 350,
+            duration: 300,
+            useNativeDriver: false,
+            easing: Easing.linear,
+        }).start();
+        
+        Animated.timing(npcOpacity, {
+            toValue: 100,
+            duration: 150,
+            useNativeDriver: false,
+        }).start();
+
+        setTimeout(() => {
+            setAnimateNpc(false);
+            setNpcSprite(require('../../../assets/images/npc_sprite/LeftNPC3Stand.png'));
+        }, 1000);
+    };
+
+    const handlePlayerEnter = () => {
+        setPlayerSprite(require('../../../assets/images/player_sprite/LeftPlayer.png'));
+        setAnimatePlayer(true);
+        
+        Animated.timing(playerPosition, {
+            toValue: 450,
+            duration: 300,
+            useNativeDriver: false,
+            easing: Easing.linear,
+        }).start();
+
+        setTimeout(() => {
+            setAnimatePlayer(false);
+            setPlayerSprite(require('../../../assets/images/player_sprite/LeftPlayerStand.png'));
+        }, 1000);
+    };
+
+    const handleRheeyuEnter = () => {
+        setRheeyuSprite(require('../../../assets/images/npc_sprite/RightRheeyu.png'));
+        setAnimateRheeyu(true);
+        
+        Animated.timing(rheeyuPosition, {
+            toValue: 150,
+            duration: 300,
+            useNativeDriver: false,
+            easing: Easing.linear,
+        }).start();
+
+        setTimeout(() => {
+            setAnimateRheeyu(false);
+            setRheeyuSprite(require('../../../assets/images/npc_sprite/RightRheeyuStand.png'));
+        }, 1000);
+    };
+
+    const handleNikuEnter = () => {
+        setNikuSprite(require('../../../assets/images/npc_sprite/RightNiku.png'));
+        setAnimateNiku(true);
+        
+        Animated.timing(nikuPosition, {
+            toValue: 150,
+            duration: 300,
+            useNativeDriver: false,
+            easing: Easing.linear,
+        }).start();
+
+        setTimeout(() => {
+            setAnimateNiku(false);
+            setNikuSprite(require('../../../assets/images/npc_sprite/LeftNikuStand.png'));
+        }, 1000);
+    };
+
     useEffect(() => {
         if (!showDialogue) return;
-        
+
         const currentAction = dialog[currentIndex].action;
-        
+
         switch (currentAction) {
             case 'npc_throws_trash':
-                // NPC present in starting position
+                setNpcSprite(require('../../../assets/images/npc_sprite/DownNPC3Stand.png'));
+                setAnimateNpc(false);
+                Animated.timing(paperTrashOpacity, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: false
+                }).start();
                 break;
-                
             case 'npc_walks_away':
-                Animated.timing(npcPosition, {
-                    toValue: 400,
-                    duration: 2000,
-                    useNativeDriver: true
-                }).start();
-                Animated.timing(npcOpacity, {
-                    toValue: 100,
-                    duration: 1500,
-                    useNativeDriver: true
-                }).start();
-                Animated.timing(trashOpacity, {
+                handleNpcWalkAway();
+                Animated.timing(paperTrashOpacity, {
                     toValue: 1,
-                    duration: 500,
-                    useNativeDriver: true
+                    duration: 200,
+                    useNativeDriver: false
                 }).start();
                 break;
-                
+            case 'player_enters':
+                handlePlayerEnter();
+                break;
             case 'rheeyu_enters':
-                Animated.timing(rheeyuPosition, {
-                    toValue: 150,
-                    duration: 800,
-                    useNativeDriver: true
-                }).start();
+                handleRheeyuEnter();
                 break;
-                
+            case 'rheeyu_approaches':
+                setNpcSprite(require('../../../assets/images/npc_sprite/LeftNPC3StandAngry.png'));
+                setAnimateNpc(false);
+                break;
+            case 'rheeyu_stand':
+                setRheeyuSprite(require('../../../assets/images/npc_sprite/RightRheeyuStand.png'));
+                setNpcSprite(require('../../../assets/images/npc_sprite/LeftNPC3Stand.png'));
+                setAnimateRheeyu(false);
+                break;
+            case 'npc_stand':
+                setNpcSprite(require('../../../assets/images/npc_sprite/LeftNPC3Stand.png'));
+                setAnimateNpc(false);
+                break;
             case 'trash_forming':
-                // Create shake animation
                 Animated.sequence([
                     Animated.timing(shakeAnimation, {
                         toValue: 10,
                         duration: 100,
-                        useNativeDriver: true
+                        useNativeDriver: false,
                     }),
                     Animated.timing(shakeAnimation, {
                         toValue: -10,
                         duration: 100,
-                        useNativeDriver: true
+                        useNativeDriver: false,
                     }),
                     Animated.timing(shakeAnimation, {
                         toValue: 10,
                         duration: 100,
-                        useNativeDriver: true
+                        useNativeDriver: false,
                     }),
                     Animated.timing(shakeAnimation, {
                         toValue: -10,
                         duration: 100,
-                        useNativeDriver: true
+                        useNativeDriver: false,
                     }),
                     Animated.timing(shakeAnimation, {
                         toValue: 0,
                         duration: 100,
-                        useNativeDriver: true
-                    })
+                        useNativeDriver: false,
+                    }),
                 ]).start();
-                // Start fading in the trash monster at the trash position
+                Animated.timing(paperTrashOpacity, {
+                    toValue: 100,
+                    duration: 300,
+                    useNativeDriver: false
+                }).start();
                 Animated.timing(trashMonsterOpacity, {
-                    toValue: 0.5,
+                    toValue: 0,
                     duration: 80,
-                    useNativeDriver: true
+                    useNativeDriver: false,
                 }).start();
                 Animated.timing(trashOpacity, {
                     toValue: 0,
                     duration: 10,
-                    useNativeDriver: true
+                    useNativeDriver: false,
                 }).start();
                 break;
-                
             case 'trash_monster_appears':
+                Animated.timing(paperTrashOpacity, {
+                    toValue: 0,
+                    duration: 100,
+                    useNativeDriver: false
+                }).start();
                 Animated.parallel([
                     Animated.timing(trashMonsterScale, {
                         toValue: 1,
                         duration: 100,
-                        useNativeDriver: true
+                        useNativeDriver: false,
                     }),
                     Animated.timing(trashMonsterOpacity, {
                         toValue: 1,
                         duration: 120,
-                        useNativeDriver: true
-                    })
+                        useNativeDriver: false,
+                    }),
                 ]).start();
                 break;
-                
             case 'niku_enters':
-                Animated.timing(nikuPosition, {
-                    toValue: 150,
-                    duration: 800,
-                    useNativeDriver: true
-                }).start();
+                handleNikuEnter();
                 break;
-                
+            case 'niku_stand':
+                setNikuSprite(require('../../../assets/images/npc_sprite/LeftNikuStand.png'));
+                setAnimateNiku(false);
+                break;
+            case 'rheeyu_shocked':
+                setRheeyuSprite(require('../../../assets/images/npc_sprite/RightRheeyuShocked.png'));
+                setAnimateRheeyu(false);
+                break;
+            case 'rheeyu_to_niku':
+                setNikuSprite(require('../../../assets/images/npc_sprite/LeftNikuStand.png'));
+                setAnimateNiku(false);
+                break;
+            case 'niku_shows_device':
+                setNikuSprite(require('../../../assets/images/npc_sprite/LeftNikuStand.png'));
+                setAnimateNiku(false);
+                break;
+            case 'both_turn_to_player':
+                setNikuSprite(require('../../../assets/images/npc_sprite/RightNikuStand.png'));
+                setAnimateNiku(false);
+                break;
+            case 'niku_smiles':
+                setNikuSprite(require('../../../assets/images/npc_sprite/RightNikuStand.png'));
+                setAnimateNiku(false);
+                break;
+            case 'tutorial_voiceover':
+                setAnimateRheeyu(false);
+                break;
             case 'tutorial_end':
-                // Set a timer to navigate to the tutorial battle after this dialog
-                setTimeout(() => {
-                    navigation.navigate('TutorialScreen');
-                }, 2000);
+                setAnimateNiku(false);
                 break;
-                
             default:
-                // No specific animation for this dialog
+                setNpcSprite(require('../../../assets/images/npc_sprite/LeftNPC3Stand.png'));
+                setRheeyuSprite(require('../../../assets/images/npc_sprite/RightRheeyuStand.png'));
+                setNikuSprite(require('../../../assets/images/npc_sprite/LeftNikuStand.png'));
+                setPlayerSprite(require('../../../assets/images/player_sprite/LeftPlayerStand.png'));
+                setAnimateNpc(false);
+                setAnimateRheeyu(false);
+                setAnimateNiku(false);
+                setAnimatePlayer(false);
                 break;
         }
-    }, [currentIndex, showDialogue]);
 
-    const getCurrentLineParts = () => {
-        return dialog[currentIndex];
-    };
+    }, [currentIndex, showDialogue, dialog, navigation, npcOpacity, npcPosition, nikuPosition, rheeyuPosition, playerPosition, shakeAnimation, trashMonsterOpacity, trashMonsterScale, trashOpacity, paperTrashOpacity]);
+
+    const getCurrentLineParts = () => dialog[currentIndex];
 
     const triggerFadeTransition = (callback?: () => void) => {
         setIsTransitioning(true);
@@ -215,12 +361,12 @@ export default function Cutscene_1() {
             Animated.timing(fadeAnim, {
                 toValue: 1,
                 duration: 500,
-                useNativeDriver: true,
+                useNativeDriver: false,
             }),
             Animated.timing(fadeAnim, {
                 toValue: 0,
                 duration: 1000,
-                useNativeDriver: true,
+                useNativeDriver: false,
             }),
         ]).start(() => {
             setIsTransitioning(false);
@@ -246,7 +392,7 @@ export default function Cutscene_1() {
         Animated.timing(introFadeAnim, {
             toValue: 0,
             duration: 800,
-            useNativeDriver: true,
+            useNativeDriver: false,
         }).start(() => {
             setBlackScreenVisible(false);
             setBufferVisible(true);
@@ -257,91 +403,135 @@ export default function Cutscene_1() {
         });
     };
 
-    // Render character sprites based on the current dialog
     const renderSprites = () => {
         if (!showDialogue || bufferVisible) return null;
 
-        // Get the current sprite frame for animation
-        const frameOffset = spriteFrame * 32; // Assuming 32px is the width of each frame
-        
+        const frameTranslateX = -spriteFrame * FRAME_WIDTH;
+
         return (
             <>
                 {/* NPC Character */}
-                <Animated.Image 
-                    source={require('../../../assets/images/player_sprite/player_down1.png')} 
+                <Animated.View
                     style={[
-                        styles.image_sprite,
+                        animateNpc ? styles.walkingCharacterContainer : styles.standingCharacterContainer,
                         {
-                            transform: [
-                                { translateX: npcPosition },
-                                { translateY: 0 }
-                            ],
-                            opacity: npcOpacity,
                             left: -20,
-                            width: 44,
-                            height: 68,
-                        }
+                            transform: [{ translateX: npcPosition }],
+                            opacity: npcOpacity,
+                        },
                     ]}
-                />
-                
-                {/* Trash on the ground */}
-                <Animated.Image 
-                    source={require('../../../assets/images/enemy_sprite/trashmonster1.png')} 
+                >
+                    <Animated.Image
+                        source={npcSprite}
+                        style={[
+                            animateNpc ? styles.walking_sprite : styles.standing_sprite,
+                            animateNpc && {
+                                transform: [{ translateX: frameTranslateX }],
+                            },
+                        ]}
+                    />
+                </Animated.View>
+
+                {/* Player Character */}
+                <Animated.View
                     style={[
-                        styles.trashImage,
-                        { opacity: trashOpacity }
+                        animatePlayer ? styles.walkingCharacterContainer : styles.standingCharacterContainer,
+                        {
+                            left: -20,
+                            transform: [{ translateX: playerPosition }],
+                        },
+                    ]}
+                >
+                    <Animated.Image
+                        source={playerSprite}
+                        style={[
+                            animatePlayer ? styles.walking_sprite : styles.standing_sprite,
+                            animatePlayer && {
+                                transform: [{ translateX: frameTranslateX }],
+                            },
+                        ]}
+                    />
+                </Animated.View>
+
+                {/* Paper Trash */}
+                <Animated.Image
+                    source={require('../../../assets/images/trash_sprite/paper_trash.png')}
+                    style={[
+                        styles.trashMonsterImage,
+                        {
+                            transform: [
+                                { scale: 0.5 },
+                                { translateX: shakeAnimation },
+                            ],
+                            opacity: paperTrashOpacity,
+                            position: "absolute",
+                            bottom: 250,
+                            left: 230,
+                            width: 110,
+                            height: 100,
+                        },
                     ]}
                 />
-                
+
                 {/* Rheeyu Character */}
-                <Animated.Image 
-                    source={require('../../../assets/images/player_sprite/player_down1.png')} 
+                <Animated.View
                     style={[
-                        styles.image_sprite,
+                        animateRheeyu ? styles.walkingCharacterContainer : styles.standingCharacterContainer,
                         {
-                            transform: [
-                                { translateX: rheeyuPosition }
-                            ],
                             left: -100,
-                            width: 44,
-                            height: 68,
-                        }
+                            transform: [{ translateX: rheeyuPosition }],
+                        },
                     ]}
-                />
-                
+                >
+                    <Animated.Image
+                        source={rheeyuSprite}
+                        style={[
+                            animateRheeyu ? styles.walking_sprite : styles.standing_sprite,
+                            animateRheeyu && {
+                                transform: [{ translateX: frameTranslateX }],
+                            },
+                        ]}
+                    />
+                </Animated.View>
+
                 {/* Niku Character */}
-                <Animated.Image 
-                    source={require('../../../assets/images/player_sprite/player_down1.png')} 
+                <Animated.View
                     style={[
-                        styles.image_sprite,
+                        animateNiku ? styles.walkingCharacterContainer : styles.standingCharacterContainer,
                         {
-                            transform: [
-                                { translateX: nikuPosition }
-                            ],
                             left: -30,
-                            width: 44,
-                            height: 68,
-                        }
+                            transform: [{ translateX: nikuPosition }],
+                        },
                     ]}
-                />
-                
+                >
+                    <Animated.Image
+                        source={nikuSprite}
+                        style={[
+                            animateNiku ? styles.walking_sprite : styles.standing_sprite,
+                            animateNiku && {
+                                transform: [{ translateX: frameTranslateX }],
+                            },
+                        ]}
+                    />
+                </Animated.View>
+
                 {/* Trash Monster */}
-                <Animated.Image 
+                <Animated.Image
                     source={require('../../../assets/images/enemy_sprite/phantompaper.png')}
                     style={[
                         styles.trashMonsterImage,
                         {
                             transform: [
                                 { scale: trashMonsterScale },
-                                { translateX: shakeAnimation }
+                                { translateX: shakeAnimation },
                             ],
+                            opacity: trashMonsterOpacity,
                             position: "absolute",
                             bottom: 260,
-                            left: 250,
-                            width: 64,
-                            height: 68,
-                            opacity: trashMonsterOpacity
-                        }
+                            left: 230,
+                            width: 90,
+                            height: 100,
+                        },
                     ]}
                 />
             </>
@@ -353,12 +543,12 @@ export default function Cutscene_1() {
     return (
         <View style={styles.container}>
             <View style={{ flex: 1 }}>
-                <Animated.View 
+                <Animated.View
                     style={[
                         styles.container_inner,
                         {
-                            transform: [{ translateX: shakeAnimation }]
-                        }
+                            transform: [{ translateX: shakeAnimation }],
+                        },
                     ]}
                 >
                     <ImageBackground
@@ -370,29 +560,44 @@ export default function Cutscene_1() {
 
                     {showDialogue && (
                         <>
-                            <ImageBackground
-                                source={require('../../../assets/images/DialogueBox.png')}
-                                style={styles.backgroundimg_dialoguebox}
-                            >
-                                <TouchableOpacity
-                                    onPress={handleNextDialogue}
-                                    activeOpacity={0.7}
-                                    style={styles.dialogueTouchableArea}
+                            <View style={styles.dialogueWrapper}>
+                                <ImageBackground
+                                    source={require('../../../assets/images/DialogueBox.png')}
+                                    style={styles.backgroundimg_dialoguebox}
                                 >
-                                    {(() => {
-                                        const { name, message } = getCurrentLineParts();
-                                        return (
-                                            <>
-                                                {name !== "" && <Text style={styles.character_name}>{name}</Text>}
-                                                <Text style={styles.text_dialogue}>{message}</Text>
-                                            </>
-                                        );
-                                    })()}
-                                </TouchableOpacity>
-                            </ImageBackground>
+                                    <TouchableOpacity
+                                        onPress={handleNextDialogue}
+                                        activeOpacity={0.7}
+                                        style={styles.dialogueTouchableArea}
+                                    >
+                                        {(() => {
+                                            const { name, message, portrait } = getCurrentLineParts();
+                                            return (
+                                                <View>
+                                                    
+                                                <View style={styles.dialogueContainer}>
+                                                    
+                                                    <View style={styles.textContainer}>
+                                                    {name !== "" && <Text style={styles.character_name}>{name}</Text>}
+                                                        <Text style={styles.text_dialogue}>{message}</Text>
+                                                    </View>
+                                                </View>
+                                                </View>
+                                            );
+                                        })()}
+                                    </TouchableOpacity>
+                                </ImageBackground>
+
+                                {dialog[currentIndex].portrait && (
+                                    <Image 
+                                        source={dialog[currentIndex].portrait}
+                                        style={styles.portraitBesideDialog}
+                                    />
+                                )}
+                            </View>
 
                             {showClickHint && (
-                                <Text style={styles.clickHint}>Click the dialog box!</Text>
+                                <Text style={styles.clickHint}>Press the dialog box to continue!</Text>
                             )}
                         </>
                     )}
@@ -444,48 +649,74 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        alignItems: "center",
-        alignContent: "center",
-        alignSelf: "center",
-        height: 1000,
-        width: 500
-    },
-    container_inner: {
-        backgroundColor: "lightgray",
+        alignItems: 'center',
+        alignContent: 'center',
+        alignSelf: 'center',
         height: 1000,
         width: 500,
-        alignItems: "center"
     },
-    image_sprite: {
-        height: 250,
-        width: 250,
-        position: "absolute",
-        bottom: 0,
-        marginBottom: 280
+    container_inner: {
+        backgroundColor: 'lightgray',
+        height: 1000,
+        width: 500,
+        alignItems: 'center',
+    },
+    walkingCharacterContainer: {
+        position: 'absolute',
+        bottom: 280,
+        width: FRAME_WIDTH,
+        height: FRAME_HEIGHT,
+        overflow: 'hidden',
+    },
+    standingCharacterContainer: {
+        position: 'absolute',
+        bottom: 280,
+        width: STANDING_SPRITE_WIDTH,
+        height: STANDING_SPRITE_HEIGHT,
+        overflow: 'hidden',
+    },
+    walking_sprite: {
+        width: FRAME_WIDTH * SPRITE_ANIMATION_STEPS,
+        height: FRAME_HEIGHT,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+    },
+    standing_sprite: {
+        width: STANDING_SPRITE_WIDTH,
+        height: STANDING_SPRITE_HEIGHT,
+        position: 'absolute',
+        top: 0,
+        left: 0,
     },
     trashImage: {
         height: 40,
         width: 40,
-        position: "absolute",
+        position: 'absolute',
         bottom: 260,
         left: 250,
-        zIndex: 1
+        zIndex: 1,
     },
     trashMonsterImage: {
         height: 180,
         width: 180,
-        position: "absolute",
+        position: 'absolute',
         bottom: 80,
         right: 150,
+    },
+    dialogueWrapper: {
+        position: 'absolute',
+        bottom: 40,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        width: '100%',
+        paddingHorizontal: 40,
     },
     backgroundimg_dialoguebox: {
         width: 395,
         height: 200,
-        margin: 40,
-        position: "absolute",
-        bottom: 0,
-        alignItems: "center",
-        justifyContent: "flex-start",
+        flex: 1,
+        right: 40,
     },
     dialogueTouchableArea: {
         flex: 1,
@@ -493,39 +724,52 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    dialogueContainer: {
+        width: 300,
+        height: 200,
+        marginLeft: 50,
+        marginBottom: 10,
+        
+    },
+    textContainer: {
+        flex: 1,
+        position: 'relative',
+        paddingTop: 30,
+        
+    },
     character_name: {
-        fontFamily: "PixelifySans-Bold",
-        fontSize: 23,
-        marginBottom: 5,
-        marginHorizontal: 50,
-        marginTop: 30,
-        textAlign: "left",
-        alignSelf: "flex-start",
-        top: 0,
-        position: "absolute"
+        fontFamily: 'PixelifySans-Bold',
+        fontSize: 25,
+        color:'rgba(89, 32, 3, 0.85)',
+        marginLeft: 40,
+        zIndex: 1,
     },
     text_dialogue: {
-        textAlign: "left",
-        fontFamily: "Pixelify Sans",
-        justifyContent: "flex-start",
-        alignSelf: "flex-start",
-        fontSize: 18,
-        marginHorizontal: 50,
-        marginTop: 25,
+        fontFamily: 'Stardew Valley',
+        color:'rgba(104, 37, 3, 0.85)',
+        fontSize: 24,
+        marginTop: 5,
         marginBottom: 10,
+        marginLeft: 40,
+    },
+    portraitBesideDialog: {
+        width: 165,
+        height: 200,
+        marginBottom: 0,
+        left: 30,
     },
     clickHint: {
         position: 'absolute',
         bottom: 80,
-        alignSelf: 'center',
+        alignSelf: 'flex-start',
+        marginLeft: 60,
         fontSize: 18,
-        color: 'white',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        paddingHorizontal: 12,
+        fontFamily: 'Stardew Valley',
+        color: 'rgba(0, 0, 0, 0.61)',
+        backgroundColor: 'rgba(188, 154, 124, 0.61)',
+        paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 8,
-        fontFamily: 'PixelifySans-Bold',
-        zIndex: 11,
-        opacity: 0.30,
-    }
+        opacity: 0.5,
+    },
 });
