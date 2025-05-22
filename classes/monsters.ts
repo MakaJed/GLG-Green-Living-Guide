@@ -20,6 +20,24 @@ const TIER_2_STATS: Stats = {
 };
 
 // Define some basic eco-skills
+
+// Self-healing skill for all pet types
+export const GENERAL_SKILLS = {
+    ecoRestore: new EcoSkill(
+        "Eco Restore",
+        EcoType.RECYCLABLE, // Type doesn't matter for healing
+        25,
+        0,
+        "Restore HP using eco-friendly energy",
+        (user, target, damage) => {
+            // This is a healing skill, so it heals the user instead of damaging the target
+            const healAmount = Math.floor(user.stats.hp * 0.25); // Heal 25% of max HP
+            user.currentHp = Math.min(user.stats.hp, user.currentHp + healAmount);
+            return `${user.name} recovered ${healAmount} HP!`;
+        }
+    )
+};
+
 export const RECYCLABLE_SKILLS = {
     segregationSweep: new EcoSkill(
         "Segregation Sweep",

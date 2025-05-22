@@ -110,8 +110,8 @@ export class Creature {
         type: EcoType,
         level: number,
         baseStats: Stats,
-        skills: Skill[],
-        availableSkills: Skill[] = [], // Add available skills parameter
+        initialSkills: Skill[],
+        availableSkills: Skill[] = [], // Skills that can be learned at higher levels
         position: Position = { x: 0, y: 0 }
     ) {
         this.name = name;
@@ -121,8 +121,36 @@ export class Creature {
         this.stats = baseStats;
         this.currentHp = baseStats.hp;
         this.currentMp = baseStats.mp;
-        this.skills = skills;
-        this.availableSkills = availableSkills;
+        
+        // Ensure level 1 pets start with exactly 2 skills
+        if (level === 1) {
+            // Take the first 2 skills from initialSkills
+            this.skills = initialSkills.slice(0, 2);
+            
+            // Add remaining skills to availableSkills for learning later
+            this.availableSkills = [
+                ...initialSkills.slice(2),
+                ...availableSkills
+            ];
+        } else {
+            // For higher level pets, calculate how many skills they should have
+            let skillCount = 2; // Start with 2
+            if (level >= 5) skillCount++; // Add one at level 5
+            if (level >= 10) skillCount++; // Add another at level 10
+            
+            // Cap at 4 skills maximum
+            skillCount = Math.min(skillCount, 4);
+            
+            // Take the appropriate number of skills
+            this.skills = initialSkills.slice(0, skillCount);
+            
+            // Add remaining skills to availableSkills
+            this.availableSkills = [
+                ...initialSkills.slice(skillCount),
+                ...availableSkills
+            ];
+        }
+        
         this.position = position;
     }
 
@@ -205,8 +233,27 @@ export class Creature {
             
             // Check for new skills at level 5 and 10
             let learnedSkill: Skill | undefined;
+            
+            // Learn a new skill at level 5 and level 10
             if (this.level === 5 || this.level === 10) {
-                learnedSkill = this.learnNewSkill();
+                // Only learn if we have less than 4 skills total
+                if (this.skills.length < 4) {
+                    learnedSkill = this.learnNewSkill();
+                }
+            }
+            
+            // If the pet leveled up multiple times at once and crossed level 5 or 10
+            if (!learnedSkill && oldLevel < 5 && this.level >= 5) {
+                if (this.skills.length < 4) {
+                    learnedSkill = this.learnNewSkill();
+                }
+            }
+            
+            // If the pet leveled up multiple times at once and crossed level 10
+            if (!learnedSkill && oldLevel < 10 && this.level >= 10) {
+                if (this.skills.length < 4) {
+                    learnedSkill = this.learnNewSkill();
+                }
             }
             
             return { 
@@ -284,9 +331,15 @@ export class EcoSkill implements Skill {
     }
 
     execute(user: Creature, target: Creature): number {
-        if (user.currentMp < this.mpCost) {
+        // Apply skill discount if available
+        const actualCost = Math.max(0, this.mpCost - user.nextSkillDiscount);
+        
+        if (user.currentMp < actualCost) {
             return 0; // Not enough MP
         }
+
+        // Reset skill discount after use
+        user.nextSkillDiscount = 0;
 
         // Level-based power scaling (higher level = more powerful skills)
         const levelScalingFactor = 1 + (user.level * 0.05); // 5% increase per level
@@ -314,7 +367,7 @@ export class EcoSkill implements Skill {
 
         // Apply damage and costs
         target.currentHp = Math.max(0, target.currentHp - finalDamage);
-        user.currentMp -= this.mpCost;
+        user.currentMp -= actualCost;
 
         // Increase recycle gauge based on damage dealt (more for effective attacks)
         const gaugeIncrease = Math.floor(finalDamage * 0.1 * effectiveness);

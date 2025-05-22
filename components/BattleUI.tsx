@@ -11,15 +11,18 @@ import {
   Platform,
   Alert,
   Animated,
+  TouchableOpacity,
+  ScrollView,
+  Modal
 } from 'react-native';
+import { Creature, EcoType, EcoSkill, Skill } from '../classes/battle';
 import { BattleSystem, BattleAction } from '../classes/BattleSystem';
-import { Creature, Skill, EcoSkill } from '../classes/battle';
 import { TrashMonsterFactory } from '../classes/monsters';
 import { DiamondButton } from './DiamondButton';
-import { BattleLog } from './BattleLog';
 import { HealthBar } from './HealthBar';
 import { ManaBar } from './ManaBar';
 import { ExpBar } from './ExpBar';
+import { BattleLog } from './BattleLog';
 
 interface BattleUIProps {
   playerPet: Creature;
@@ -166,7 +169,91 @@ export const BattleUI: React.FC<BattleUIProps> = ({ playerPet, enemy: providedEn
   const [isBattleOver, setIsBattleOver] = useState(false); // Add battle over state
   const [playerBlinkAnim] = useState(new Animated.Value(1));
   const [enemyBlinkAnim] = useState(new Animated.Value(1));
+  const [showSkillEffect, setShowSkillEffect] = useState(false);
+  const [skillEffectColor, setSkillEffectColor] = useState('rgba(0, 100, 255, 0.3)');
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  
+  // Animation states
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [animationType, setAnimationType] = useState<
+    'basic_attack' | 
+    'recycle_attack' | 
+    'compost_attack' | 
+    'hazard_attack' | 
+    'general_heal' | 
+    'pet_heal' | 
+    'trash_attack' | 
+    'level_up' | 
+    null
+  >(null);
+  const [animationTarget, setAnimationTarget] = useState<'player' | 'enemy' | null>(null);
+  
+  // Damage number popup system
+  type DamagePopup = {
+    id: number;
+    value: number;
+    isHealing: boolean;
+    isEP: boolean;
+    position: 'player' | 'enemy';
+    animation: Animated.Value;
+    opacity: Animated.Value;
+  };
+  
+  const [damagePopups, setDamagePopups] = useState<DamagePopup[]>([]);
+  const [nextPopupId, setNextPopupId] = useState(0);
+  
+  // Function to play animations
+  const playAnimation = (type: typeof animationType, target: 'player' | 'enemy') => {
+    setAnimationType(type);
+    setAnimationTarget(target);
+    setShowAnimation(true);
+    
+    // Hide animation after it plays
+    setTimeout(() => {
+      setShowAnimation(false);
+      setAnimationType(null);
+      setAnimationTarget(null);
+    }, 1500); // Most animations are around 1-1.5 seconds
+  };
+  
+  // Function to create a new damage popup
+  const showDamageNumber = (value: number, isHealing: boolean, position: 'player' | 'enemy', isEP: boolean = false) => {
+    const animation = new Animated.Value(0);
+    const opacity = new Animated.Value(1);
+    
+    const newPopup: DamagePopup = {
+      id: nextPopupId,
+      value,
+      isHealing,
+      isEP,
+      position,
+      animation,
+      opacity
+    };
+    
+    setDamagePopups(prev => [...prev, newPopup]);
+    setNextPopupId(prev => prev + 1);
+    
+    // Animate the popup
+    Animated.parallel([
+      Animated.timing(animation, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true
+      }),
+      Animated.sequence([
+        Animated.delay(500),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true
+        })
+      ])
+    ]).start(() => {
+      // Remove the popup after animation completes
+      setDamagePopups(prev => prev.filter(popup => popup.id !== newPopup.id));
+    });
+  };
 
   // Helper: apply passive effects at the start of turn
   const applyPassives = (pet: Creature) => {
@@ -289,6 +376,19 @@ export const BattleUI: React.FC<BattleUIProps> = ({ playerPet, enemy: providedEn
           const logs = battleSystem.executeAction({ type: 'BASIC_ATTACK' });
           setBattleLog(logs);
           
+          // Play trash attack animation
+          playAnimation('trash_attack', 'player');
+          
+          // Extract damage from battle logs for enemy attacks
+          for (const log of logs) {
+            const damageMatch = log.match(/for (\d+) damage/);
+            if (damageMatch && damageMatch[1]) {
+              const damage = parseInt(damageMatch[1]);
+              // Show damage number on player
+              showDamageNumber(damage, false, 'player');
+            }
+          }
+          
           // Play blink animation for player
           await playBlinkAnimation(true);
           
@@ -355,10 +455,106 @@ export const BattleUI: React.FC<BattleUIProps> = ({ playerPet, enemy: providedEn
 
       const logs = battleSystem.executeAction(action);
       setBattleLog(logs);
+      
+      // Determine animation type based on action
+      if (action.type === 'BASIC_ATTACK') {
+        playAnimation('basic_attack', 'enemy');
+      } else if (action.type === 'SKILL' && action.skill) {
+        const skill = action.skill as EcoSkill;
+        
+        // Check if it's a healing skill
+        const isHealingSkill = skill.name.toLowerCase().includes('heal') || 
+                              skill.name.toLowerCase().includes('recovery') ||
+                              skill.name.toLowerCase().includes('restore');
+        
+        if (isHealingSkill) {
+          // Self-healing animation
+          playAnimation('pet_heal', 'player');
+        } else {
+          // Attack animation based on skill type
+          switch (skill.type) {
+            case EcoType.RECYCLABLE:
+              playAnimation('recycle_attack', 'enemy');
+              break;
+            case EcoType.COMPOSTABLE:
+              playAnimation('compost_attack', 'enemy');
+              break;
+            case EcoType.HAZARDOUS:
+              playAnimation('hazard_attack', 'enemy');
+              break;
+            default:
+              playAnimation('basic_attack', 'enemy');
+          }
+        }
+      } else if (action.type === 'ITEM' && action.item) {
+        // Different animations based on item effect
+        if (action.item.effect === 'heal') {
+          // General healing item animation
+          playAnimation('general_heal', 'player');
+        } else if (action.item.effect === 'ep') {
+          // EP restoration animation - use a blue-tinted effect
+          setSkillEffectColor('rgba(0, 100, 255, 0.5)');
+          setShowSkillEffect(true);
+          setTimeout(() => setShowSkillEffect(false), 1000);
+        }
+      }
+      
+      // Extract damage or healing values from battle logs
+      for (const log of logs) {
+        // Check for damage
+        const damageMatch = log.match(/for (\d+) damage/);
+        if (damageMatch && damageMatch[1]) {
+          const damage = parseInt(damageMatch[1]);
+          // Show damage number on enemy
+          showDamageNumber(damage, false, 'enemy');
+        }
+        
+        // Check for healing
+        const healMatch = log.match(/recovered (\d+) HP/);
+        if (healMatch && healMatch[1]) {
+          const healing = parseInt(healMatch[1]);
+          // Show healing number on player
+          showDamageNumber(healing, true, 'player');
+        }
+        
+        // Check for EP recovery
+        const epMatch = log.match(/recovered (\d+) EP/);
+        if (epMatch && epMatch[1]) {
+          const ep = parseInt(epMatch[1]);
+          // Show EP recovery number on player with blue color
+          showDamageNumber(ep, true, 'player', true);
+        }
+      }
 
       // Play blink animation for the target
       if (action.type === 'BASIC_ATTACK' || action.type === 'SKILL') {
         await playBlinkAnimation(false); // Enemy blinks when hit
+        
+        // Add visual feedback for special skill effects
+        if (action.type === 'SKILL' && action.skill && (action.skill as EcoSkill).specialEffect) {
+          // Add special effect animation or visual feedback based on skill type
+          const skillType = action.skill.type;
+          
+          // Different animations based on skill type
+          if (skillType === EcoType.RECYCLABLE) {
+            // Recyclable skills animation (blue glow)
+            setSkillEffectColor('rgba(0, 100, 255, 0.3)');
+          } else if (skillType === EcoType.COMPOSTABLE) {
+            // Compostable skills animation (green glow)
+            setSkillEffectColor('rgba(0, 255, 100, 0.3)');
+          } else if (skillType === EcoType.HAZARDOUS) {
+            // Hazardous skills animation (purple glow)
+            setSkillEffectColor('rgba(200, 0, 255, 0.3)');
+          }
+          
+          // Show the effect
+          setShowSkillEffect(true);
+          
+          // Hide after 1 second
+          setTimeout(() => {
+            setShowSkillEffect(false);
+          }, 1000);
+        }
       }
 
       setIsPlayerTurn(false);
@@ -451,12 +647,26 @@ export const BattleUI: React.FC<BattleUIProps> = ({ playerPet, enemy: providedEn
     
     let log = '';
     if (item.effect === 'heal') {
+      // Play healing animation directly on the pet
+      playAnimation('general_heal', 'player');
+      
       const heal = Math.floor(playerPet.stats.hp * item.value);
       playerPet.currentHp = Math.min(playerPet.stats.hp, playerPet.currentHp + heal);
+      
+      // Show healing number popup
+      showDamageNumber(heal, true, 'player');
       log = `${playerPet.name} healed ${heal} HP!`;
     } else if (item.effect === 'ep') {
+      // Show EP restoration effect
+      setSkillEffectColor('rgba(0, 100, 255, 0.5)');
+      setShowSkillEffect(true);
+      setTimeout(() => setShowSkillEffect(false), 1000);
+      
       playerPet.currentMp = Math.min(playerPet.stats.mp, playerPet.currentMp + item.value);
-      log = `${playerPet.name} restored ${item.value} EP!`;
+      
+      // Show EP number popup
+      showDamageNumber(item.value, true, 'player', true);
+      log = `${playerPet.name} recovered ${item.value} EP!`;
     } else if (item.effect === 'antidote') {
       // Stub: implement status
       log = `${playerPet.name} is cured of poison!`;
@@ -595,6 +805,33 @@ export const BattleUI: React.FC<BattleUIProps> = ({ playerPet, enemy: providedEn
     );
   };
 
+  // Function to get the animation source based on type
+  const getAnimationSource = () => {
+    if (!animationType) return null;
+    
+    switch (animationType) {
+      case 'basic_attack':
+        return require('../assets/animation/basic_attack.gif');
+      case 'recycle_attack':
+        return require('../assets/animation/RecycleType_attack.gif');
+      case 'compost_attack':
+        return require('../assets/animation/compost_attack.gif');
+      case 'hazard_attack':
+        return require('../assets/animation/HazardType_attack.gif');
+      case 'general_heal':
+        return require('../assets/animation/general_heal.gif');
+      case 'pet_heal':
+        return require('../assets/animation/pet_heal.gif');
+      case 'trash_attack':
+        return require('../assets/animation/general_trash_attack.gif');
+      case 'level_up':
+        return require('../assets/ui/level_up.gif');
+      default:
+        return null;
+    }
+  };
+
+  // Render the battle UI
   return (
     <View style={styles.container}>
       {/* Background */}
@@ -614,6 +851,38 @@ export const BattleUI: React.FC<BattleUIProps> = ({ playerPet, enemy: providedEn
           ]} 
         />
       </View>
+      
+      {/* Damage Popups */}
+      {damagePopups.map(popup => {
+        // Calculate transform based on animation value
+        const translateY = popup.animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -50] // Move up 50 pixels
+        });
+        
+        // Position directly above the pet or enemy based on their actual positions
+        const position = popup.position === 'player' 
+          ? { left: 60, top: 420 } // Directly above player pet (petContainer is at top: 442)
+          : { left: 240, top: 310 }; // Directly above enemy (enemyImg is at top: 330)
+        
+        return (
+          <Animated.Text 
+            key={popup.id}
+            style={[
+              styles.damagePopup,
+              popup.isEP ? styles.epPopup : popup.isHealing ? styles.healingPopup : styles.damagePopupText,
+              {
+                position: 'absolute',
+                ...position,
+                opacity: popup.opacity,
+                transform: [{ translateY }]
+              }
+            ]}
+          >
+            {popup.isHealing ? '+' : ''}{popup.value}
+          </Animated.Text>
+        );
+      })}
 
       {/* Pet Image with Blink Animation */}
       <Animated.View 
@@ -672,6 +941,28 @@ export const BattleUI: React.FC<BattleUIProps> = ({ playerPet, enemy: providedEn
           {battleLog[battleLog.length - 1]}
         </Text>
       </View>
+      
+      {/* Animation overlay */}
+      {showAnimation && animationType && (
+        <View style={[
+          styles.animationContainer,
+          animationTarget === 'player' ? styles.playerAnimationPosition : styles.enemyAnimationPosition
+        ]}>
+          <Image 
+            source={getAnimationSource()!}
+            style={styles.animationImage}
+            resizeMode="contain"
+          />
+        </View>
+      )}
+      
+      {/* Skill effect overlay */}
+      {showSkillEffect && (
+        <View style={[
+          styles.skillEffectOverlay,
+          { backgroundColor: skillEffectColor }
+        ]} />  
+      )}
 
       {/* Skill/Item Menus */}
       {showSkillMenu && (
@@ -784,7 +1075,28 @@ export const BattleUI: React.FC<BattleUIProps> = ({ playerPet, enemy: providedEn
 
 const PIXEL_FONT = Platform.select({ ios: 'Courier', android: 'monospace' });
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create({  
+  // Damage popup styles
+  damagePopup: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+    zIndex: 10,
+  },
+  damagePopupText: {
+    color: '#FF5252',
+  },
+  healingPopup: {
+    color: '#4CAF50',
+    fontSize: 28, // Slightly larger for better visibility
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowRadius: 3,
+  },
+  epPopup: {
+    color: '#2196F3', // Blue color for EP recovery
+  },
   container: {
     flex: 1,
     width: SCREEN_W,
@@ -935,7 +1247,44 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
   },
-  // ... keep other styles as needed ...
+  petStats: {
+    marginTop: 5,
+    fontSize: 12,
+    color: '#333',
+    textAlign: 'center',
+  },
+  // Animation styles
+  animationContainer: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    zIndex: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playerAnimationPosition: {
+    // Position directly on the player pet based on actual position
+    top: 442, // Same as petContainer top
+    left: 35, // Slightly adjusted to center on pet
+  },
+  enemyAnimationPosition: {
+    // Position directly on the enemy based on actual position
+    top: 305, // Slightly above enemyImg to center animation
+    left: 215, // Slightly adjusted to center on enemy
+  },
+  animationImage: {
+    width: '100%',
+    height: '100%',
+  },
+  skillEffectOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
+    zIndex: 50,
+  },
   hpBarContainer: {
     width: 160,
     padding: 10,
@@ -1087,7 +1436,7 @@ const styles = StyleSheet.create({
   petInfo: {
     flex: 1,
   },
-  petStats: {
+  petStatsDetail: {
     fontFamily: PIXEL_FONT,
     color: '#90cdf4',
     fontSize: 12,

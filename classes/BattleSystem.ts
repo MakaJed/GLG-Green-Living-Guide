@@ -1,4 +1,4 @@
-import { Creature, Skill } from './battle';
+import { Creature, Skill, EcoType } from './battle';
 
 export interface BattleState {
     playerPet: Creature;
@@ -10,9 +10,15 @@ export interface BattleState {
 }
 
 export type BattleAction = {
-    type: 'SKILL' | 'BASIC_ATTACK' | 'DEFEND' | 'ACTIVATE_RECYCLE' | 'REST' | 'SWITCH_PET';
+    type: 'SKILL' | 'BASIC_ATTACK' | 'DEFEND' | 'ACTIVATE_RECYCLE' | 'REST' | 'SWITCH_PET' | 'ITEM';
     skill?: Skill;
     targetPet?: Creature;
+    item?: {
+        name: string;
+        effect: 'heal' | 'ep' | 'status';
+        value: number;
+        description: string;
+    };
 };
 
 export class BattleSystem {
@@ -61,6 +67,40 @@ export class BattleSystem {
                             this.state.playerPet = action.targetPet;
                             logs.push(`${playerPet.name} switched out!`);
                             logs.push(`${action.targetPet.name} joined the battle!`);
+                        }
+                    }
+                    break;
+                case 'ITEM':
+                    if (action.item) {
+                        if (action.item.effect === 'heal') {
+                            // Calculate healing amount based on max HP
+                            const healAmount = Math.floor(playerPet.stats.hp * action.item.value);
+                            
+                            // Apply healing boost if the pet has one (primarily for Compostable types)
+                            const finalHealAmount = playerPet.healingBoost ? 
+                                Math.floor(healAmount * playerPet.healingBoost) : healAmount;
+                                
+                            playerPet.currentHp = Math.min(playerPet.stats.hp, playerPet.currentHp + finalHealAmount);
+                            logs.push(`${playerPet.name} used ${action.item.name} and recovered ${finalHealAmount} HP!`);
+                            
+                            // Compostable pets get a small EP boost when healing
+                            if (playerPet.type === EcoType.COMPOSTABLE) {
+                                const epBonus = Math.floor(playerPet.stats.mp * 0.05); // 5% EP bonus
+                                playerPet.currentMp = Math.min(playerPet.stats.mp, playerPet.currentMp + epBonus);
+                                logs.push(`${playerPet.name}'s compostable nature converted some healing into ${epBonus} EP!`);
+                            }
+                        } else if (action.item.effect === 'ep') {
+                            // EP recovery items restore a fixed amount
+                            const epAmount = action.item.value;
+                            playerPet.currentMp = Math.min(playerPet.stats.mp, playerPet.currentMp + epAmount);
+                            logs.push(`${playerPet.name} used ${action.item.name} and recovered ${epAmount} EP!`);
+                            
+                            // Recyclable pets get a small HP boost when restoring EP
+                            if (playerPet.type === EcoType.RECYCLABLE) {
+                                const hpBonus = Math.floor(playerPet.stats.hp * 0.05); // 5% HP bonus
+                                playerPet.currentHp = Math.min(playerPet.stats.hp, playerPet.currentHp + hpBonus);
+                                logs.push(`${playerPet.name}'s recyclable nature converted some energy into ${hpBonus} HP!`);
+                            }
                         }
                     }
                     break;

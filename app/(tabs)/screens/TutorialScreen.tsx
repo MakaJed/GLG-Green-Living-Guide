@@ -12,11 +12,12 @@ import { RootStackParamList } from '../types';
 import { RouteProp } from '@react-navigation/native';
 import { BattleUI } from '../../../components/BattleUI';
 import { Creature, EcoType } from '../../../classes/battle';
+import { TrashMonsterFactory } from '../../../classes/monsters';
+import { PET_SKILL_PROGRESSION } from '../../../config/PetSkills';
 import {
   RECYCLABLE_SKILLS,
   COMPOSTABLE_SKILLS,
   HAZARDOUS_SKILLS,
-  TrashMonsterFactory,
 } from '../../../classes/monsters';
 
 type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
@@ -100,15 +101,38 @@ export default function TutorialScreen({ route }: Props) {
     if (selected) {
       try {
         const petName = selected;
-        const config = PET_CONFIGURATIONS[petName as keyof typeof PET_CONFIGURATIONS];
-        const playerPet = new Creature(petName, config.type, 1, PET_BASE_STATS, config.skills);
+        
+        // Map the selected pet to one of our configured pets
+        let petType: 'Recyclotron' | 'Composter' | 'Toxaway';
+        
+        if (petName === 'Cubble') {
+          petType = 'Recyclotron';
+        } else if (petName === 'Owlleaf') {
+          petType = 'Composter';
+        } else { // Meowmblebee
+          petType = 'Toxaway';
+        }
+        
+        // Get the skills from our progression system
+        const initialSkills = PET_SKILL_PROGRESSION[petType].initialSkills;
+        const additionalSkills = PET_SKILL_PROGRESSION[petType].additionalSkills;
+        
+        // Create the pet with level 1 (will start with 2 skills)
+        const playerPet = new Creature(
+          petName,
+          EcoType[petType.toUpperCase() as keyof typeof EcoType], 
+          1, 
+          PET_BASE_STATS, 
+          initialSkills,
+          additionalSkills
+        );
         
         // Import the PetStorageService
         const { saveMainPet } = require('../../../services/PetStorageService');
         
         // Save the pet as the main pet that will be used throughout the game
         await saveMainPet(playerPet);
-        console.log(`Saved ${petName} as the main pet`);
+        console.log(`Saved ${petName} as the main pet with level-based skill progression`);
       } catch (error) {
         console.error('Error saving main pet:', error);
       }
@@ -165,8 +189,31 @@ export default function TutorialScreen({ route }: Props) {
 
   const renderBattle = () => {
     const petName = selected!;
-    const config = PET_CONFIGURATIONS[petName as keyof typeof PET_CONFIGURATIONS];
-    const playerPet = new Creature(petName, config.type, 1, PET_BASE_STATS, config.skills);
+    
+    // Map the selected pet to one of our configured pets
+    let petType: 'Recyclotron' | 'Composter' | 'Toxaway';
+    
+    if (petName === 'Cubble') {
+      petType = 'Recyclotron';
+    } else if (petName === 'Owlleaf') {
+      petType = 'Composter';
+    } else { // Meowmblebee
+      petType = 'Toxaway';
+    }
+    
+    // Get the skills from our progression system
+    const initialSkills = PET_SKILL_PROGRESSION[petType].initialSkills;
+    const additionalSkills = PET_SKILL_PROGRESSION[petType].additionalSkills;
+    
+    // Create the pet with level 1 (will start with 2 skills)
+    const playerPet = new Creature(
+      petName,
+      EcoType[petType.toUpperCase() as keyof typeof EcoType], 
+      1, 
+      PET_BASE_STATS, 
+      initialSkills,
+      additionalSkills
+    );
 
     return (
       <BattleUI
