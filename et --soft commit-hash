@@ -1,0 +1,127 @@
+[33mcommit 20c4276a9028d90fd9c6e1ce26158fe26829d379[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m
+Author: MakaJed <arongmarkjed@gmail.com>
+Date:   Thu May 22 10:44:20 2025 +0800
+
+    Initial commit
+
+[33mcommit f44da8e0b19e5522de600d8f7e9b8f8b34b21f19[m
+Author: faminoganangela <faminoganangela@gmail.com>
+Date:   Thu May 22 08:55:57 2025 +0800
+
+    Main Game Maps and NPC integrated
+
+[33mcommit 6f7ab40240aecf24d50b5a11afcc46d72d3e100e[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Thu May 22 04:18:48 2025 +0800
+
+    Game map tile navigation
+
+[33mcommit 23078421058518acbee428fc6d5987027c758a66[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Wed May 21 23:52:19 2025 +0800
+
+    refined cutscene with proper assets
+
+[33mcommit 2b2490f259118389e7e481c8bf5b0e2893a88f6b[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Wed May 21 05:54:53 2025 +0800
+
+    Fixed main navigation
+
+[33mcommit b9c5297e858d676de6ea797c5cb8b5dd340c1d02[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Mon May 19 03:39:44 2025 +0800
+
+    Fixed cutscene a bit with minor changes
+
+[33mcommit f7222b9662abdd64d6feff96d96385af1dfef5f4[m
+Merge: b640910 2d82ba4
+Author: Angela <faminoganangela@gmail.com>
+Date:   Sun May 18 22:08:25 2025 +0800
+
+    merge
+
+[33mcommit b6409107e9b31dcb992fc34712c19cb1665c31e3[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Sun May 18 22:03:51 2025 +0800
+
+    Cutscene with sprites
+
+[33mcommit 2d82ba403e8402873c5c197b6fbab80efe4b6416[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Sun May 18 20:41:33 2025 +0800
+
+    Update README.md
+
+[33mcommit 8e75a3477eb0f60870468f370e579fd05c53278d[m
+Author: MakaJed <arongmarkjed@gmail.com>
+Date:   Thu May 15 22:23:06 2025 +0800
+
+    Update project files
+
+[33mcommit a03b2257b7cfdf97fa890fc8382d01906ca32ecf[m
+Merge: d53c10d c536d63
+Author: MakaJed <arongmarkjed@gmail.com>
+Date:   Thu May 15 22:07:48 2025 +0800
+
+    Merge branch 'main' of https://github.com/faminoganangela/GLG
+
+[33mcommit c536d63f11bf8dd0bfe36629a21601cdc7751e22[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Thu May 15 21:22:22 2025 +0800
+
+    added files
+
+[33mcommit d53c10de35421d7cb027c79d188e1b6f2299cd70[m
+Author: MakaJed <arongmarkjed@gmail.com>
+Date:   Thu May 15 15:30:56 2025 +0800
+
+    Battle and NPC addition
+
+[33mcommit 00fd8b0e5079d40237b05015c1b5ae6667273307[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Wed May 14 17:16:36 2025 +0800
+
+    connected game map after cutscene 1
+
+[33mcommit 43634f04090ad9d7584e91fb20c48ac9c7ba8b64[m
+Author: jed <Arongmarkjed@gmail.com>
+Date:   Tue May 13 20:46:33 2025 +0800
+
+    first commit
+
+[33mcommit 7e1ddcc789adc40646d9d36bde46d983b4901fa0[m
+Author: jed <Arongmarkjed@gmail.com>
+Date:   Tue May 13 20:37:45 2025 +0800
+
+    first commit
+
+[33mcommit 7e8ed13332477544381ba69ef3777d95614c1f30[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Mon May 5 03:40:25 2025 +0800
+
+    Added cutscene intro
+
+[33mcommit 725a3073c73a8e9753b4cff606e7636858af8d62[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Mon Apr 28 23:48:32 2025 +0800
+
+    Cutscene
+
+[33mcommit 7f49f102417885a859c63ef72f560ba25f0c0d6c[m
+Author: Angela <faminoganangela@gmail.com>
+Date:   Sun Apr 27 19:42:57 2025 +0800
+
+    connected the titlescreen to loadscreen and some changes
+
+[33mcommit 22a0bef5b4343227b1988dc589c99e0479657d59[m
+Author: faminoganangela <faminoganangela@gmail.com>
+Date:   Fri Apr 25 12:26:26 2025 +0800
+
+    title screen UI
+
+[33mcommit ba74eaf6f8c39d364dbf212d71c302904235df83[m
+Author: faminoganangela <faminoganangela@gmail.com>
+Date:   Thu Apr 17 00:41:14 2025 +0800
+
+    Initial commit

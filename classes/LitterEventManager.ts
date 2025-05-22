@@ -47,19 +47,21 @@ export class LitterEventManager {
     this.npcSpawner = new NPCSpawner(boundaries, mapWidth, mapHeight, tileSize);
   }
 
-  // Spawn initial NPCs at game start
-  spawnInitialNPCs(count: number, litterChance: number = 0.005, moveSpeed: number = 1): void {
-    const npcs = this.npcSpawner.spawnNPCs(count, litterChance, moveSpeed);
+  // Spawn a specified number of NPCs
+  spawnInitialNPCs(count: number, litterChance: number = 0.005, moveSpeed: number = 2) {
+    const newNPCs = this.npcSpawner.spawnNPCs(count, litterChance, moveSpeed);
     
-    // Register all NPCs with their collision checker
-    npcs.forEach(npc => {
-      npc.setCollisionChecker((npc, nextPos) => 
-        this.npcSpawner.checkNPCCollision(npc, nextPos)
-      );
-      this.npcs.set(npc.id, npc);
+    // Add NPCs and set their collision checker
+    newNPCs.forEach(npc => {
+      // Set collision checker function from the spawner
+      npc.setCollisionChecker((npc, nextPosition) => {
+        return this.npcSpawner.checkNPCCollision(npc, nextPosition);
+      });
+      
+      this.addNPC(npc);
     });
     
-    console.log(`Spawned ${npcs.length} NPCs`);
+    return newNPCs;
   }
 
   addNPC(npc: NPC) {
@@ -161,33 +163,82 @@ export class LitterEventManager {
       y: event.position.y + (Math.random() - 0.5) * this.SPAWN_RADIUS
     };
 
-    // Create appropriate monster based on trash type
-    const level = Math.floor(Math.random() * 3) + 1; // Random level 1-3
+    // Create appropriate monster based on trash type with weighted level distribution
+    // This creates a more natural distribution where lower levels are more common
+    // but higher level monsters can still appear occasionally
+    let level: number;
+    const randomValue = Math.random();
+    
+    if (randomValue < 0.5) {
+      // 50% chance for levels 1-5
+      level = Math.floor(Math.random() * 5) + 1;
+    } else if (randomValue < 0.8) {
+      // 30% chance for levels 6-10
+      level = Math.floor(Math.random() * 5) + 6;
+    } else if (randomValue < 0.95) {
+      // 15% chance for levels 11-14
+      level = Math.floor(Math.random() * 4) + 11;
+    } else {
+      // 5% chance for level 15 (rare boss-like encounter)
+      level = 15;
+    }
     let monster;
     const trashSprite = event.trashType.sprite;
     
     // Map trash type to appropriate monster
-    if (trashSprite === 'can_trash') {
-      monster = TrashMonsterFactory.createCanstruct(level);
-    } else if (trashSprite === 'paper_trash') {
-      monster = TrashMonsterFactory.createPaperPhantom(level);
-    } else if (trashSprite === 'organic_trash') {
-      monster = TrashMonsterFactory.createGreezeGlob(level);
-    } else {
-      // Default fallback based on eco type
-      switch (event.trashType.type) {
-        case EcoType.RECYCLABLE:
-          monster = TrashMonsterFactory.createCanstruct(level);
-          break;
-        case EcoType.COMPOSTABLE:
-          monster = TrashMonsterFactory.createCompostCreeper(level);
-          break;
-        case EcoType.HAZARDOUS:
-          monster = TrashMonsterFactory.createToxicTerror(level);
-          break;
-        default:
-          monster = TrashMonsterFactory.createCanstruct(level);
-      }
+    switch (trashSprite) {
+      case 'metal':
+        monster = Math.random() < 0.5 ? 
+          TrashMonsterFactory.createCanstruct(level) : 
+          TrashMonsterFactory.createSarcan(level);
+        break;
+      case 'food_waste':
+        const foodWasteMonsters = [
+          TrashMonsterFactory.createGreezeGlob,
+          TrashMonsterFactory.createEgglut,
+          TrashMonsterFactory.createGloofuud,
+          TrashMonsterFactory.createRotato
+        ];
+        monster = foodWasteMonsters[Math.floor(Math.random() * foodWasteMonsters.length)](level);
+        break;
+      case 'paper':
+        monster = TrashMonsterFactory.createPaperPhantom(level);
+        break;
+      case 'plastic':
+        const plasticMonsters = [
+          TrashMonsterFactory.createBottroll,
+          TrashMonsterFactory.createCrunchor,
+          TrashMonsterFactory.createCupkwek,
+          TrashMonsterFactory.createSssstrawpent,
+          TrashMonsterFactory.createJellystic
+        ];
+        monster = plasticMonsters[Math.floor(Math.random() * plasticMonsters.length)](level);
+        break;
+      case 'glass':
+        monster = Math.random() < 0.5 ? 
+          TrashMonsterFactory.createJar(level) : 
+          TrashMonsterFactory.createShardlass(level);
+        break;
+      case 'electronic':
+        monster = Math.random() < 0.5 ? 
+          TrashMonsterFactory.createVoltwing(level) : 
+          TrashMonsterFactory.createPhonii(level);
+        break;
+      default:
+        // Default fallback based on eco type
+        switch (event.trashType.type) {
+          case EcoType.RECYCLABLE:
+            monster = TrashMonsterFactory.createCanstruct(level);
+            break;
+          case EcoType.COMPOSTABLE:
+            monster = TrashMonsterFactory.createGreezeGlob(level);
+            break;
+          case EcoType.HAZARDOUS:
+            monster = TrashMonsterFactory.createVoltwing(level);
+            break;
+          default:
+            monster = TrashMonsterFactory.createCanstruct(level);
+        }
     }
     
     // Set the monster's position

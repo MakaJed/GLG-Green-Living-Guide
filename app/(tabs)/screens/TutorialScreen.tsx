@@ -86,7 +86,8 @@ export default function TutorialScreen({ route }: Props) {
   const [step, setStep] = useState<'intro' | 'select' | 'battle' | 'done'>('intro');
   const [selected, setSelected] = useState<string | null>(null);
 
-  const enemy = TrashMonsterFactory.createCanstruct(1);
+  // Use Paper_Phantom as the fixed enemy for the tutorial battle
+  const enemy = TrashMonsterFactory.createPaperPhantom(1);
 
   const handleStartTutorial = () => setStep('select');
 
@@ -94,7 +95,25 @@ export default function TutorialScreen({ route }: Props) {
     if (selected) setStep('battle');
   };
 
-  const handleBattleEnd = (won: boolean) => {
+  const handleBattleEnd = async (won: boolean) => {
+    // When the tutorial battle ends, save the selected pet as the main pet
+    if (selected) {
+      try {
+        const petName = selected;
+        const config = PET_CONFIGURATIONS[petName as keyof typeof PET_CONFIGURATIONS];
+        const playerPet = new Creature(petName, config.type, 1, PET_BASE_STATS, config.skills);
+        
+        // Import the PetStorageService
+        const { saveMainPet } = require('../../../services/PetStorageService');
+        
+        // Save the pet as the main pet that will be used throughout the game
+        await saveMainPet(playerPet);
+        console.log(`Saved ${petName} as the main pet`);
+      } catch (error) {
+        console.error('Error saving main pet:', error);
+      }
+    }
+    
     setStep('done');
     onTutorialComplete?.();
   };

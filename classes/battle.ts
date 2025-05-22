@@ -2,18 +2,50 @@
 
 // Eco-Type system representing different waste management categories
 export enum EcoType {
+    // Pet Types
     RECYCLABLE = 'RECYCLABLE',
     COMPOSTABLE = 'COMPOSTABLE',
     HAZARDOUS = 'HAZARDOUS',
-    NEUTRAL = 'NEUTRAL'
+    
+    // Trash Types
+    METAL = 'METAL',
+    FOOD_WASTE = 'FOOD_WASTE',
+    PAPER = 'PAPER',
+    PLASTIC = 'PLASTIC',
+    GLASS = 'GLASS',
+    ELECTRONIC = 'ELECTRONIC'
 }
 
-// Type effectiveness mapping
+// Type effectiveness mapping for Pet Types against Trash Types
 export const typeEffectiveness: Record<EcoType, EcoType[]> = {
-    [EcoType.COMPOSTABLE]: [EcoType.HAZARDOUS],
-    [EcoType.RECYCLABLE]: [EcoType.COMPOSTABLE],
-    [EcoType.HAZARDOUS]: [EcoType.RECYCLABLE],
-    [EcoType.NEUTRAL]: []
+    // Pet Types
+    [EcoType.RECYCLABLE]: [EcoType.PLASTIC, EcoType.PAPER, EcoType.METAL, EcoType.GLASS], // Strong against
+    [EcoType.COMPOSTABLE]: [EcoType.FOOD_WASTE, EcoType.PAPER], // Strong against
+    [EcoType.HAZARDOUS]: [EcoType.ELECTRONIC, EcoType.METAL], // Strong against
+    
+    // Trash Types (not used for effectiveness, just for completeness)
+    [EcoType.METAL]: [],
+    [EcoType.FOOD_WASTE]: [],
+    [EcoType.PAPER]: [],
+    [EcoType.PLASTIC]: [],
+    [EcoType.GLASS]: [],
+    [EcoType.ELECTRONIC]: []
+};
+
+// Type weaknesses mapping for Pet Types against Trash Types
+export const typeWeaknesses: Record<EcoType, EcoType[]> = {
+    // Pet Types
+    [EcoType.RECYCLABLE]: [EcoType.FOOD_WASTE, EcoType.ELECTRONIC], // Weak against
+    [EcoType.COMPOSTABLE]: [EcoType.PLASTIC, EcoType.METAL, EcoType.GLASS, EcoType.ELECTRONIC], // Weak against
+    [EcoType.HAZARDOUS]: [EcoType.PAPER, EcoType.FOOD_WASTE, EcoType.PLASTIC, EcoType.GLASS], // Weak against
+    
+    // Trash Types (not used for effectiveness, just for completeness)
+    [EcoType.METAL]: [],
+    [EcoType.FOOD_WASTE]: [],
+    [EcoType.PAPER]: [],
+    [EcoType.PLASTIC]: [],
+    [EcoType.GLASS]: [],
+    [EcoType.ELECTRONIC]: []
 };
 
 // Base stats interface
@@ -38,11 +70,15 @@ export interface Skill {
 
 import { Position } from './types';
 
+// Add EXP required for each level
+const EXP_PER_LEVEL = (level: number) => Math.floor(100 * Math.pow(1.5, level - 1));
+
 // Base class for all creatures (both player's pet and trash monsters)
 export class Creature {
     name: string;
     type: EcoType;
     level: number;
+    exp: number;
     stats: Stats;
     currentHp: number;
     currentMp: number;
@@ -53,6 +89,21 @@ export class Creature {
     recycleModeTurnsLeft: number = 0;
     // Add property for tracking original trash type for monsters
     originalTrashType?: string;
+    availableSkills: Skill[]; // Add available skills pool
+    // New properties for enhanced battle mechanics
+    nextSkillDiscount: number = 0;
+    isStunned: boolean = false;
+    // Healing-related properties
+    healingBoost: number = 1.0;
+    healingBoostTurns: number = 0;
+    hotAmount: number = 0;
+    hotTurnsLeft: number = 0;
+    // Damage-over-time properties
+    dotAmount: number = 0;
+    dotTurnsLeft: number = 0;
+    // Delayed damage properties
+    pendingDamage: number = 0;
+    pendingDamageTurns: number = 0;
 
     constructor(
         name: string,
@@ -60,32 +111,52 @@ export class Creature {
         level: number,
         baseStats: Stats,
         skills: Skill[],
+        availableSkills: Skill[] = [], // Add available skills parameter
         position: Position = { x: 0, y: 0 }
     ) {
         this.name = name;
         this.type = type;
         this.level = level;
+        this.exp = 0;
         this.stats = baseStats;
         this.currentHp = baseStats.hp;
         this.currentMp = baseStats.mp;
         this.skills = skills;
+        this.availableSkills = availableSkills;
         this.position = position;
     }
 
     // Calculate damage multiplier based on type effectiveness
     getTypeEffectiveness(attackType: EcoType, defenderType: EcoType): number {
-        if (typeEffectiveness[attackType].includes(defenderType)) {
-            return 1.5; // Super effective
+        // Check if attacker is a Pet Type and defender is a Trash Type
+        const isPetType = [EcoType.RECYCLABLE, EcoType.COMPOSTABLE, EcoType.HAZARDOUS].includes(attackType);
+        const isTrashType = [EcoType.METAL, EcoType.FOOD_WASTE, EcoType.PAPER, EcoType.PLASTIC, EcoType.GLASS, EcoType.ELECTRONIC].includes(defenderType);
+        
+        // Only apply type effectiveness if attacker is Pet Type and defender is Trash Type
+        if (isPetType && isTrashType) {
+            if (typeEffectiveness[attackType].includes(defenderType)) {
+                return 1.5; // Super effective (×1.5 damage)
+            }
+            if (typeWeaknesses[attackType].includes(defenderType)) {
+                return 0.6; // Not very effective (×0.6 damage)
+            }
+            // If no specific effectiveness is defined, use the inverse of the other type's effectiveness
+            const otherPetTypes = [EcoType.RECYCLABLE, EcoType.COMPOSTABLE, EcoType.HAZARDOUS].filter(type => type !== attackType);
+            for (const otherType of otherPetTypes) {
+                if (typeEffectiveness[otherType].includes(defenderType)) {
+                    return 0.6; // Not very effective against types that other pets are strong against
+                }
+                if (typeWeaknesses[otherType].includes(defenderType)) {
+                    return 1.5; // Super effective against types that other pets are weak against
+                }
+            }
         }
-        if (typeEffectiveness[defenderType].includes(attackType)) {
-            return 0.5; // Not very effective
-        }
-        return 1.0; // Normal effectiveness
+        return 1.0; // Default to normal effectiveness for non-pet vs trash matchups
     }
 
     // Basic attack that restores some MP
     basicAttack(target: Creature): number {
-        const damage = Math.floor(this.stats.attack * 0.8);
+        const damage = Math.floor(this.stats.attack * 1.0);
         target.currentHp -= damage;
         this.currentMp = Math.min(this.stats.mp, this.currentMp + 10);
         return damage;
@@ -122,28 +193,94 @@ export class Creature {
     isDefeated(): boolean {
         return this.currentHp <= 0;
     }
+
+    // Add EXP and handle leveling up
+    addExp(amount: number): { leveledUp: boolean; newLevel?: number; learnedSkill?: Skill } {
+        this.exp += amount;
+        const expNeeded = EXP_PER_LEVEL(this.level);
+        
+        if (this.exp >= expNeeded) {
+            const oldLevel = this.level;
+            this.levelUp();
+            
+            // Check for new skills at level 5 and 10
+            let learnedSkill: Skill | undefined;
+            if (this.level === 5 || this.level === 10) {
+                learnedSkill = this.learnNewSkill();
+            }
+            
+            return { 
+                leveledUp: true, 
+                newLevel: this.level,
+                learnedSkill: learnedSkill
+            };
+        }
+        
+        return { leveledUp: false };
+    }
+
+    // Learn a new skill if available
+    private learnNewSkill(): Skill | undefined {
+        // Only learn if we have less than 4 skills and there are available skills
+        if (this.skills.length < 4 && this.availableSkills.length > 0) {
+            // Get the next skill from available skills
+            const newSkill = this.availableSkills[0];
+            // Remove it from available skills
+            this.availableSkills = this.availableSkills.slice(1);
+            // Add it to learned skills
+            this.skills.push(newSkill);
+            return newSkill;
+        }
+        return undefined;
+    }
+
+    // Level up and increase stats
+    private levelUp() {
+        this.level++;
+        this.exp = 0;
+        
+        // Increase stats
+        this.stats.hp += Math.floor(this.stats.hp * 0.1); // +10% HP
+        this.stats.mp += Math.floor(this.stats.mp * 0.1); // +10% MP
+        this.stats.attack += Math.floor(this.stats.attack * 0.1); // +10% Attack
+        this.stats.defense += Math.floor(this.stats.defense * 0.1); // +10% Defense
+        this.stats.speed += Math.floor(this.stats.speed * 0.1); // +10% Speed
+        this.stats.resistance += Math.floor(this.stats.resistance * 0.1); // +10% Resistance
+        
+        // Restore HP and MP on level up
+        this.currentHp = this.stats.hp;
+        this.currentMp = this.stats.mp;
+    }
+
+    // Get EXP needed for next level
+    getExpNeeded(): number {
+        return EXP_PER_LEVEL(this.level);
+    }
 }
 
-// Implementation of a basic eco-skill
+// Implementation of an enhanced eco-skill with level-based scaling and special effects
 export class EcoSkill implements Skill {
     name: string;
     type: EcoType;
     power: number;
     mpCost: number;
     description: string;
+    specialEffect?: (user: Creature, target: Creature, damage: number) => string;
 
     constructor(
         name: string,
         type: EcoType,
         power: number,
         mpCost: number,
-        description: string
+        description: string,
+        specialEffect?: (user: Creature, target: Creature, damage: number) => string
     ) {
         this.name = name;
         this.type = type;
         this.power = power;
         this.mpCost = mpCost;
         this.description = description;
+        this.specialEffect = specialEffect;
     }
 
     execute(user: Creature, target: Creature): number {
@@ -151,30 +288,58 @@ export class EcoSkill implements Skill {
             return 0; // Not enough MP
         }
 
-        // Calculate damage
+        // Level-based power scaling (higher level = more powerful skills)
+        const levelScalingFactor = 1 + (user.level * 0.05); // 5% increase per level
+        
+        // Calculate damage with level scaling
         const effectiveness = user.getTypeEffectiveness(this.type, target.type);
         const baseDamage = Math.floor(
-            (user.stats.attack * this.power) / target.stats.defense
+            (user.stats.attack * this.power * levelScalingFactor) / target.stats.defense
         );
         
-        // Critical hit chance (10%)
-        const isCritical = Math.random() < 0.1;
+        // Critical hit chance (10% base + 0.5% per level)
+        const critChance = 0.1 + (user.level * 0.005);
+        const isCritical = Math.random() < critChance;
         const criticalMultiplier = isCritical ? 1.5 : 1.0;
 
         // Calculate final damage
-        const finalDamage = Math.floor(
+        let finalDamage = Math.floor(
             baseDamage * effectiveness * criticalMultiplier
         );
 
-        // Apply damage and costs
-        target.currentHp -= finalDamage;
-        user.currentMp -= this.mpCost;
-
-        // Increase recycle gauge on super effective hits
-        if (effectiveness > 1) {
-            user.recycleGauge = Math.min(100, user.recycleGauge + 25);
+        // Recycle Mode bonus (20% more damage if in Recycle Mode)
+        if (user.isInRecycleMode) {
+            finalDamage = Math.floor(finalDamage * 1.2);
         }
 
+        // Apply damage and costs
+        target.currentHp = Math.max(0, target.currentHp - finalDamage);
+        user.currentMp -= this.mpCost;
+
+        // Increase recycle gauge based on damage dealt (more for effective attacks)
+        const gaugeIncrease = Math.floor(finalDamage * 0.1 * effectiveness);
+        user.recycleGauge = Math.min(100, user.recycleGauge + gaugeIncrease);
+
+        // Apply any special effects
+        let specialEffectMessage = '';
+        if (this.specialEffect) {
+            specialEffectMessage = this.specialEffect(user, target, finalDamage);
+        }
+
+        // Add type effectiveness message to battle log
+        let effectivenessMessage = '';
+        if (effectiveness > 1) {
+            effectivenessMessage = "It's super effective!";
+        } else if (effectiveness < 1) {
+            effectivenessMessage = "It's not very effective...";
+        }
+
+        // Add critical hit message if applicable
+        if (isCritical) {
+            effectivenessMessage = "A critical hit! " + effectivenessMessage;
+        }
+
+        // Return the damage dealt
         return finalDamage;
     }
 } 

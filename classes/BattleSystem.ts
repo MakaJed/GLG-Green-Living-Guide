@@ -6,109 +6,123 @@ export interface BattleState {
     isPlayerTurn: boolean;
     turnCount: number;
     battleLog: string[];
+    party: Creature[];
 }
 
 export type BattleAction = {
-    type: 'SKILL' | 'BASIC_ATTACK' | 'DEFEND' | 'ACTIVATE_RECYCLE';
+    type: 'SKILL' | 'BASIC_ATTACK' | 'DEFEND' | 'ACTIVATE_RECYCLE' | 'REST' | 'SWITCH_PET';
     skill?: Skill;
+    targetPet?: Creature;
 };
 
 export class BattleSystem {
     private state: BattleState;
 
-    constructor(playerPet: Creature, enemy: Creature) {
+    constructor(playerPet: Creature, enemy: Creature, party: Creature[] = []) {
         this.state = {
             playerPet,
             enemy,
-            isPlayerTurn: playerPet.stats.speed >= enemy.stats.speed, // Faster creature goes first
+            isPlayerTurn: playerPet.stats.speed >= enemy.stats.speed,
             turnCount: 0,
-            battleLog: [`Battle started between ${playerPet.name} and ${enemy.name}!`]
+            battleLog: [`Battle started between ${playerPet.name} and ${enemy.name}!`],
+            party: [playerPet, ...party]
         };
+    }
+
+    public executeAction(action: BattleAction): string[] {
+        const { playerPet, enemy, isPlayerTurn } = this.state;
+        const logs: string[] = [];
+
+        if (isPlayerTurn) {
+            // Player's turn
+            switch (action.type) {
+                case 'SKILL':
+                    if (action.skill) {
+                        const damage = action.skill.execute(playerPet, enemy);
+                        logs.push(`${playerPet.name} used ${action.skill.name} for ${damage} damage!`);
+                    }
+                    break;
+                case 'BASIC_ATTACK':
+                    const damage = playerPet.basicAttack(enemy);
+                    logs.push(`${playerPet.name} used Basic Attack for ${damage} damage!`);
+                    break;
+                case 'DEFEND':
+                    logs.push(`${playerPet.name} is defending!`);
+                    break;
+                case 'REST':
+                    const epRecovery = Math.floor(playerPet.stats.mp * 0.5);
+                    playerPet.currentMp = Math.min(playerPet.stats.mp, playerPet.currentMp + epRecovery);
+                    logs.push(`${playerPet.name} rested and recovered ${epRecovery} EP!`);
+                    break;
+                case 'SWITCH_PET':
+                    if (action.targetPet && action.targetPet !== playerPet) {
+                        const targetPetIndex = this.state.party.findIndex(p => p === action.targetPet);
+                        if (targetPetIndex !== -1) {
+                            this.state.playerPet = action.targetPet;
+                            logs.push(`${playerPet.name} switched out!`);
+                            logs.push(`${action.targetPet.name} joined the battle!`);
+                        }
+                    }
+                    break;
+            }
+
+            // Check if enemy is defeated
+            if (enemy.isDefeated()) {
+                const expGain = Math.floor(50 * enemy.level);
+                this.state.party.forEach(pet => {
+                    const { leveledUp, newLevel } = pet.addExp(expGain);
+                    if (leveledUp) {
+                        logs.push(`${pet.name} grew to level ${newLevel}!`);
+                    }
+                });
+                logs.push(`${enemy.name} was defeated!`);
+                logs.push(`Party gained ${expGain} EXP!`);
+                return logs;
+            }
+        } else {
+            // Enemy's turn
+            const damage = enemy.basicAttack(playerPet);
+            logs.push(`${enemy.name} attacks for ${damage} damage!`);
+
+            // Check if player is defeated
+            if (playerPet.isDefeated()) {
+                const otherPartyMembers = this.state.party.filter(p => p !== playerPet && !p.isDefeated());
+                if (otherPartyMembers.length > 0) {
+                    this.state.playerPet = otherPartyMembers[0];
+                    logs.push(`${playerPet.name} was defeated!`);
+                    logs.push(`${this.state.playerPet.name} joined the battle!`);
+                } else {
+                    logs.push(`${playerPet.name} was defeated!`);
+                    return logs;
+                }
+            }
+        }
+
+        // Only switch turns if battle is not over
+        if (!this.isGameOver()) {
+            this.state.isPlayerTurn = !isPlayerTurn;
+            this.state.turnCount++;
+        }
+
+        return logs;
     }
 
     public getState(): BattleState {
         return { ...this.state };
     }
 
-    public async executeAction(action: BattleAction): Promise<BattleState> {
-        const attacker = this.state.isPlayerTurn ? this.state.playerPet : this.state.enemy;
-        const defender = this.state.isPlayerTurn ? this.state.enemy : this.state.playerPet;
-
-        let damage = 0;
-        let message = '';
-
-        switch (action.type) {
-            case 'SKILL':
-                if (action.skill) {
-                    if (attacker.currentMp >= action.skill.mpCost) {
-                        damage = action.skill.execute(attacker, defender);
-                        message = `${attacker.name} used ${action.skill.name} and dealt ${damage} damage!`;
-                        
-                        // Check for critical effectiveness
-                        if (damage > action.skill.power * 1.2) {
-                            message += " It's super effective!";
-                        } else if (damage < action.skill.power * 0.8) {
-                            message += " It's not very effective...";
-                        }
-                    } else {
-                        message = `${attacker.name} doesn't have enough MP to use ${action.skill.name}!`;
-                    }
-                }
-                break;
-
-            case 'BASIC_ATTACK':
-                damage = attacker.basicAttack(defender);
-                message = `${attacker.name} used a basic attack and dealt ${damage} damage!`;
-                break;
-
-            case 'DEFEND':
-                attacker.stats.defense *= 1.5; // Temporary defense boost
-                message = `${attacker.name} took a defensive stance!`;
-                break;
-
-            case 'ACTIVATE_RECYCLE':
-                if (attacker.activateRecycleMode()) {
-                    message = `${attacker.name} activated Recycle Mode! Stats boosted for 3 turns!`;
-                } else {
-                    message = `${attacker.name} couldn't activate Recycle Mode! (Gauge not full)`;
-                }
-                break;
-        }
-
-        // Update battle log
-        this.state.battleLog.push(message);
-
-        // Check for defeated creatures
-        if (defender.isDefeated()) {
-            this.state.battleLog.push(`${defender.name} was defeated!`);
-            return this.state;
-        }
-
-        // Update Recycle Mode status
-        attacker.updateRecycleMode();
-
-        // Switch turns
-        this.state.isPlayerTurn = !this.state.isPlayerTurn;
-        this.state.turnCount++;
-
-        // Reset temporary defense boost if defending
-        if (action.type === 'DEFEND') {
-            attacker.stats.defense /= 1.5;
-        }
-
-        return this.state;
-    }
-
-    public getBattleLog(): string[] {
-        return [...this.state.battleLog];
-    }
-
     public isGameOver(): boolean {
-        return this.state.playerPet.isDefeated() || this.state.enemy.isDefeated();
+        return this.state.playerPet.isDefeated() && 
+               this.state.party.every(pet => pet.isDefeated()) || 
+               this.state.enemy.isDefeated();
     }
 
     public getWinner(): Creature | null {
         if (!this.isGameOver()) return null;
-        return this.state.playerPet.isDefeated() ? this.state.enemy : this.state.playerPet;
+        return this.state.enemy.isDefeated() ? this.state.playerPet : this.state.enemy;
+    }
+
+    public getParty(): Creature[] {
+        return [...this.state.party];
     }
 } 

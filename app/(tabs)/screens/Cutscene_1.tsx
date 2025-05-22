@@ -380,7 +380,7 @@ export default function Cutscene_1() {
         if (currentIndex < dialog.length - 1) {
             setCurrentIndex(currentIndex + 1);
         } else {
-            navigation.navigate('GameMainMap');
+            navigation.navigate('TutorialScreen');
         }
     };
 

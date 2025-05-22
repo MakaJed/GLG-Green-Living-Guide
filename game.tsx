@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from './app/types';
+import { RootStackParamList } from './app/(tabs)/types';
 
 import collisions from './app/(tabs)/data/collisions';
 import { rectangularCollision } from './app/(tabs)/data/util';
@@ -46,21 +46,77 @@ const playerSheets = {
 const trashImages = {
   can_trash: require('./assets/liter/can_trash.png'),
   paper_trash: require('./assets/liter/paper_trash.png'),
-  organic_trash: require('./assets/liter/organic_trash.png')
+  organic_trash: require('./assets/liter/organic_trash.png'),
+  plastic_trash: require('./assets/liter/plastic_trash.png'),
+  glass_trash: require('./assets/liter/glass_trash.png'),
+  electronic_trash: require('./assets/liter/electronic_trash.png')
 };
 
 // Monster images - using exact file names as keys
-const monsterImages = {
+const monsterImages: { [key: string]: any } = {
+  // Metal trash monsters
   'Cans-Truct': require('./assets/sprites/Trash_Monsters/Cans-Truct.png'),
+  'Sarcan': require('./assets/sprites/Trash_Monsters/Sarcan.png'),
+  
+  // Paper trash monsters
   'Paper_Phantom': require('./assets/sprites/Trash_Monsters/Paper_Phantom.png'),
-  'Greeze_Glob': require('./assets/sprites/Trash_Monsters/Greeze_Glob.png')
+  
+  // Food waste/organic trash monsters
+  'Greeze_Glob': require('./assets/sprites/Trash_Monsters/Greeze_Glob.png'),
+  'Egglut': require('./assets/sprites/Trash_Monsters/Egglut.png'),
+  'Gloofuud': require('./assets/sprites/Trash_Monsters/Gloofuud.png'),
+  'Rotato': require('./assets/sprites/Trash_Monsters/Rotato.png'),
+  
+  // Plastic trash monsters
+  'Bottroll': require('./assets/sprites/Trash_Monsters/Bottroll.png'),
+  'Crunchor': require('./assets/sprites/Trash_Monsters/Crunchor.png'),
+  'Cupkwek': require('./assets/sprites/Trash_Monsters/Cupkwek.png'),
+  'Sssstrawpent': require('./assets/sprites/Trash_Monsters/Sssstrawpent.png'),
+  'Jellystic': require('./assets/sprites/Trash_Monsters/Jellystic.png'),
+  
+  // Glass trash monsters
+  'Jar': require('./assets/sprites/Trash_Monsters/Jar.png'),
+  'Shardlass': require('./assets/sprites/Trash_Monsters/Shardlass.png'),
+  
+  // Electronic trash monsters
+  'Voltwing': require('./assets/sprites/Trash_Monsters/Voltwing.png'),
+  'Phonii': require('./assets/sprites/Trash_Monsters/Phonii.png')
 };
 
 // Helper function to get monster sprite based on trash type
 const getMonsterSpriteForTrash = (trashType: string) => {
-  if (trashType.includes('can')) return 'Cans-Truct';
-  if (trashType.includes('paper')) return 'Paper_Phantom';
-  if (trashType.includes('organic')) return 'Greeze_Glob';
+  // Metal trash
+  if (trashType.includes('can') || trashType.includes('metal')) {
+    return Math.random() < 0.5 ? 'Cans-Truct' : 'Sarcan';
+  }
+  
+  // Paper trash
+  if (trashType.includes('paper')) {
+    return 'Paper_Phantom';
+  }
+  
+  // Food waste/organic trash
+  if (trashType.includes('organic') || trashType.includes('food')) {
+    const organicMonsters = ['Greeze_Glob', 'Egglut', 'Gloofuud', 'Rotato'];
+    return organicMonsters[Math.floor(Math.random() * organicMonsters.length)];
+  }
+  
+  // Plastic trash
+  if (trashType.includes('plastic')) {
+    const plasticMonsters = ['Bottroll', 'Crunchor', 'Cupkwek', 'Sssstrawpent', 'Jellystic'];
+    return plasticMonsters[Math.floor(Math.random() * plasticMonsters.length)];
+  }
+  
+  // Glass trash
+  if (trashType.includes('glass')) {
+    return Math.random() < 0.5 ? 'Jar' : 'Shardlass';
+  }
+  
+  // Electronic trash
+  if (trashType.includes('electronic')) {
+    return Math.random() < 0.5 ? 'Voltwing' : 'Phonii';
+  }
+  
   return 'Cans-Truct'; // Default fallback
 };
 
@@ -183,11 +239,47 @@ export default function Game({ navigation }: GameProps) {
           litterManager.current.removeMonster(monsterEncounter.name);
           
           // Determine monster type based on original trash type
-          let enemyType = 'Cans-Truct'; // Default
-          if (monsterEncounter.originalTrashType === 'Paper_Phantom') {
-            enemyType = 'Paper_Phantom';
-          } else if (monsterEncounter.originalTrashType === 'Greeze_Glob') {
-            enemyType = 'Greeze_Glob';
+          let enemyType = monsterEncounter.name; // Use the monster's name as the type
+          
+          // Map trash sprites to monster types
+          switch (monsterEncounter.originalTrashType) {
+            // Paper trash monsters
+            case 'paper':
+              enemyType = 'Paper_Phantom';
+              break;
+              
+            // Plastic trash monsters
+            case 'plastic':
+              const plasticMonsters = ['Bottroll', 'Crunchor', 'Cupkwek', 'Sssstrawpent', 'Jellystic'];
+              enemyType = monsterEncounter.name;
+              break;
+              
+            // Food waste/organic trash monsters
+            case 'food_waste':
+              const organicMonsters = ['Greeze_Glob', 'Egglut', 'Gloofuud', 'Rotato'];
+              enemyType = monsterEncounter.name;
+              break;
+              
+            // Metal trash monsters
+            case 'metal':
+              const metalMonsters = ['Cans-Truct', 'Sarcan'];
+              enemyType = monsterEncounter.name;
+              break;
+              
+            // Glass trash monsters
+            case 'glass':
+              const glassMonsters = ['Jar', 'Shardlass'];
+              enemyType = monsterEncounter.name;
+              break;
+              
+            // Electronic trash monsters
+            case 'electronic':
+              const electronicMonsters = ['Voltwing', 'Phonii'];
+              enemyType = monsterEncounter.name;
+              break;
+              
+            default:
+              enemyType = 'Cans-Truct'; // Default fallback
           }
           
           // Show battle prompt
@@ -401,7 +493,7 @@ export default function Game({ navigation }: GameProps) {
         
         return (
           <View
-            key={`entity-${index}`}
+            testID={`entity-${index}`} // Using testID instead of key as a prop
             style={{
               position: 'absolute',
               left: Math.round(entity.position.x + offX),
