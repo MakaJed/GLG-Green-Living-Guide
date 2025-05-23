@@ -22,9 +22,9 @@ import { NPC, TrashType, TRASH_TYPES } from './classes/NPC';
 // constants
 const TILE        = 48;
 const PLAYER_H    = 68;
-const SPEED       = 20;
-const FRAME_HOLD  = 3;
-const FRAME_COUNT = 4;
+const SPEED       = 45;  // Increased from 30 to 45 for faster player movement
+const FRAME_HOLD  = 3;   // Reduced from 4 to 3 for smoother animation at higher speed
+const FRAME_COUNT = 2;
 const COLS        = 70;
 const ROWS        = Math.ceil(collisions.length / COLS);
 const MAP_WIDTH   = COLS * TILE;

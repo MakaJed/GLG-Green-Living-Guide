@@ -23,7 +23,7 @@ export type RootStackParamList = {
   TutorialScreen: { onTutorialComplete: () => void };
   Home: undefined;
   PetSelection: { enemy?: string };
-  Battle: { pet: string; enemy?: string };
+  Battle: { pet: string; enemy?: string; isTutorial?: boolean };
 };
 
 // ✅ Screens array for use in index.tsx

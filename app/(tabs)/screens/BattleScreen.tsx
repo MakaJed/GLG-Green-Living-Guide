@@ -52,15 +52,19 @@ const PET_CONFIGURATIONS = {
 };
 
 export default function BattleScreen({ route, navigation }: Props) {
-  const { pet: petName } = route.params;
-  const petConfig = PET_CONFIGURATIONS[petName as keyof typeof PET_CONFIGURATIONS];
+  // Safely extract pet name from params with fallback to default
+  const petName = route.params?.pet || 'Owlleaf';
   
   // Debug logging
   useEffect(() => {
     console.log('BattleScreen received params:', route.params);
-    console.log('Pet:', petName, 'Enemy:', route.params.enemy);
+    console.log('Pet:', petName, 'Enemy:', route.params?.enemy);
   }, [route.params, petName]);
-
+  
+  // Safely get pet configuration with fallback to default (Owlleaf)
+  const petConfig = PET_CONFIGURATIONS[petName as keyof typeof PET_CONFIGURATIONS] || PET_CONFIGURATIONS.Owlleaf;
+  
+  // Create player pet with the configuration
   const playerPet = new Creature(
     petName,
     petConfig.type,
@@ -69,28 +73,57 @@ export default function BattleScreen({ route, navigation }: Props) {
     petConfig.skills
   );
 
-  // Create enemy monster based on enemy type in params, or random if not specified
+  // Safely handle the enemy parameter
+  const enemyType = route.params.enemy || '';
+  
+  // Map all possible monster types to their factory functions
+  const monsterMap: Record<string, () => Creature> = {
+    // Metal-based monsters
+    'canstruct': () => TrashMonsterFactory.createCanstruct(1),
+    'sarcan': () => TrashMonsterFactory.createSarcan(1),
+    'crunchor': () => TrashMonsterFactory.createCrunchor(1),
+    
+    // Paper-based monsters
+    'phantompaper': () => TrashMonsterFactory.createPaperPhantom(1),
+    'paper_phantom': () => TrashMonsterFactory.createPaperPhantom(1),
+    
+    // Food/Organic-based monsters
+    'greezeglob': () => TrashMonsterFactory.createGreezeGlob(1),
+    'greeze_glob': () => TrashMonsterFactory.createGreezeGlob(1),
+    'gloofuud': () => TrashMonsterFactory.createGloofuud(1),
+    'egglut': () => TrashMonsterFactory.createEgglut(1),
+    'rotato': () => TrashMonsterFactory.createRotato(1),
+    
+    // Plastic-based monsters
+    'jellstic': () => TrashMonsterFactory.createJellystic(1),
+    'bottroll': () => TrashMonsterFactory.createBottroll(1),
+    'cupkwek': () => TrashMonsterFactory.createCupkwek(1),
+    'sssstrawpent': () => TrashMonsterFactory.createSssstrawpent(1),
+    
+    // Glass-based monsters
+    'shardlass': () => TrashMonsterFactory.createShardlass(1),
+    'jar': () => TrashMonsterFactory.createJar(1),
+    
+    // Electronic-based monsters
+    'phonii': () => TrashMonsterFactory.createPhonii(1),
+    'voltwing': () => TrashMonsterFactory.createVoltwing(1)
+  };
+  
+  // Create the enemy based on the type, or use a random one if the type is not found
   let enemy;
-  if (route.params.enemy === 'canstruct') {
-    enemy = TrashMonsterFactory.createCanstruct(1);
-  } else if (route.params.enemy === 'paper_phantom') {
-    enemy = TrashMonsterFactory.createPaperPhantom(1);
-  } else if (route.params.enemy === 'greeze_glob') {
-    enemy = TrashMonsterFactory.createGreezeGlob(1);
+  if (typeof enemyType === 'string' && monsterMap[enemyType.toLowerCase()]) {
+    enemy = monsterMap[enemyType.toLowerCase()]();
   } else {
-    // Random enemy
-    const enemies = [
-      () => TrashMonsterFactory.createCanstruct(1),
-      () => TrashMonsterFactory.createPaperPhantom(1),
-      () => TrashMonsterFactory.createGreezeGlob(1)
-    ];
-    const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+    // Random enemy if type not found or not specified
+    const enemyFactories = Object.values(monsterMap);
+    const randomEnemy = enemyFactories[Math.floor(Math.random() * enemyFactories.length)];
     enemy = randomEnemy();
   }
 
   const handleBattleEnd = (won: boolean) => {
-    // Return to home screen when battle is over
-    navigation.navigate('Home');
+    // Go back to the previous screen instead of creating a new screen
+    // This ensures we return to the exact same game instance
+    navigation.goBack();
   };
 
   return (
