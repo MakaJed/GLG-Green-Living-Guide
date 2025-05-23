@@ -14,6 +14,7 @@ import { rectangularCollision } from '../../../app/(tabs)/data/util';
 import { Boundary } from '../../../classes/Boundary';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import Guidebook from '../../../components/Guidebook';
 
 // Import the actual RootStackParamList from the app's types
 import { RootStackParamList } from '../types';
@@ -901,6 +902,9 @@ function Game() {
         source={currentMap === 'RouteJuan' ? bgImg : require('../../../assets/images/backgrounds/PelletTown.png')} 
         style={[styles.map, { left: offset.x, top: offset.y }]} 
       />
+
+      {/* Guidebook */}
+      <Guidebook currentScreen="GameMainMap" />
 
       {/* Teleport tile */}
       <View
