@@ -6,6 +6,7 @@ import Game from './screens/game';
 import TutorialScreen from './screens/TutorialScreen';
 import PetSelectionScreen from './screens/PetSelectionScreen';
 import BattleScreen from './screens/BattleScreen';
+import MiniGameScreen from './screens/MiniGameScreen';
 
 type Screen = {
   name: keyof RootStackParamList;
@@ -24,6 +25,7 @@ export type RootStackParamList = {
   Home: undefined;
   PetSelection: { enemy?: string };
   Battle: { pet: string; enemy?: string; isTutorial?: boolean };
+  MiniGameScreen: { trashType: string };
 };
 
 // ✅ Screens array for use in index.tsx
@@ -49,6 +51,15 @@ export const screens: Screen[] = [
     options: {
       headerShown: true,
       title: 'Battle!',
+      headerBackVisible: false,
+    },
+  },
+  {
+    name: 'MiniGameScreen',
+    component: MiniGameScreen,
+    options: {
+      headerShown: true,
+      title: 'Sort the Trash!',
       headerBackVisible: false,
     },
   },

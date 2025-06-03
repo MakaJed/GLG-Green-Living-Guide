@@ -7,8 +7,8 @@ interface GuidebookProps {
 }
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const BASE_WIDTH = Math.min(SCREEN_WIDTH * 0.8, 300);
-const ECODEX_WIDTH = BASE_WIDTH * 2.5;
+const BASE_WIDTH = Math.min(SCREEN_WIDTH * 0.65, 220);
+const ECODEX_WIDTH = BASE_WIDTH * 2.1;
 const ECODEX_HEIGHT = ECODEX_WIDTH * (1190/1920);
 
 const TOTAL_PAGES = 20;
@@ -184,12 +184,13 @@ const styles = StyleSheet.create({
   },
   navButton: {
     backgroundColor: 'rgba(148, 148, 148, 0.21)',
-    padding: 15,
-    borderRadius: 25,
+    padding: 10,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 20,
-    height: 300,
+    marginHorizontal: 10,
+    height: 60,
+    minWidth: 48,
   },
   disabledButton: {
     opacity: 0.5,
@@ -201,11 +202,11 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    bottom: 10,
+    bottom: 8,
     backgroundColor: 'rgba(250, 225, 179, 0.54)',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    borderRadius: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 18,
+    borderRadius: 8,
   },
   closeButtonText: {
     fontSize: 20,
@@ -224,8 +225,8 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 0,
   },
   iconImage: {
-    width: 70,
-    height: 70,
+    width: 48,
+    height: 48,
     resizeMode: 'contain',
   },
 });

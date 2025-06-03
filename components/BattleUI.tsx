@@ -1272,6 +1272,7 @@ const styles = StyleSheet.create({
     height: SCREEN_H,
     resizeMode: 'contain',
     bottom: 0,
+    
   },
   // Absolute positions for battle elements
   enemyHpBar: {
@@ -1287,8 +1288,8 @@ const styles = StyleSheet.create({
   },
   enemyImg: {
     position: 'absolute',
-    top: 285,  // Adjusted to be more centered
-    left: 240,
+    top: 255,  // Adjusted to be more centered
+    left: 220,
     width: 120, // Slightly larger for better visibility
     height: 120,
     resizeMode: 'contain',
@@ -1296,8 +1297,8 @@ const styles = StyleSheet.create({
   },
   petContainer: {
     position: 'absolute',
-    top: 400,  // Consistent positioning
-    left: 60,
+    top: 370,  // Consistent positioning
+    left: 50,
     width: 120, // Slightly larger for better visibility
     height: 120,
     zIndex: 2,
@@ -1309,7 +1310,7 @@ const styles = StyleSheet.create({
   },
   petHpBar: {
     position: 'absolute',
-    top: 400,
+    top: 390,
     left: 220,
     width: 170,
     height: 80,
@@ -1396,7 +1397,7 @@ const styles = StyleSheet.create({
   // ... keep other styles as needed ...
   battleLog: {
     position: 'absolute',
-    top: 540,
+    top: 495,
     left: 20,
     right: 20,
     padding: 10,
@@ -1428,12 +1429,12 @@ const styles = StyleSheet.create({
   playerAnimationPosition: {
     // Position directly on the player pet based on actual position
     top: 382, // Same as petContainer top
-    left: 35, // Slightly adjusted to center on pet
+    left: 50, // Slightly adjusted to center on pet
   },
   enemyAnimationPosition: {
     // Position directly on the enemy based on actual position
-    top: 270, // Slightly above enemyImg to center animation
-    left: 215, // Slightly adjusted to center on enemy
+    top: 225, // Slightly above enemyImg to center animation
+    left: 210, // Slightly adjusted to center on enemy
   },
   animationImage: {
     width: '100%',
@@ -1450,7 +1451,7 @@ const styles = StyleSheet.create({
   },
   playerDamagePosition: {
     // Position above the player pet
-    top: 382, // Above petContainer
+    top: 340, // Above petContainer
     left: 60, // Centered on pet
   },
   enemyDamagePosition: {

@@ -59,7 +59,7 @@ export default function Cutscene_1() {
         { name: "NPC", message: "Pfft, it's just one wrapper. Chill out.", action: "npc_stand", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
         { name: "Rheeyu", message: "One wrapper today, a mountain tomorrow. Every piece counts.", action: "rheeyu_stand", portrait: require('../../../assets/images/portraits/Dialog_Rheeyu_Sprite.png') },
         { name: "???", message: "RAAAAGHHH!!!", action: "trash_forming", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
-        { name: "Trash Monster", message: "More trash... more power... Humans are careless... and I AM THE RESULT!", action: "trash_monster_appears", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
+        { name: "Phantom Paper", message: "More trash... more power... Humans are careless... and I AM THE RESULT!", action: "trash_monster_appears", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
         { name: "", message: "[Trash Monster fully spawns, towering and twitching.]", action: "", portrait: require('../../../assets/images/portraits/Dialog_Empty.png') },
         { name: "Rheeyu", message: "What?! A Trash Monster?!", action: "rheeyu_shocked", portrait: require('../../../assets/images/portraits/Dialog_Rheeyu_Sprite.png') },
         { name: "???", message: "!!!", action: "niku_enters", portrait: require('../../../assets/images/portraits/Dialog_Niku_Sprite.png') },
@@ -132,7 +132,7 @@ export default function Cutscene_1() {
         setAnimateNpc(true);
         
         Animated.timing(npcPosition, {
-            toValue: 350,
+            toValue: 300,
             duration: 300,
             useNativeDriver: false,
             easing: Easing.linear,
@@ -155,7 +155,7 @@ export default function Cutscene_1() {
         setAnimatePlayer(true);
         
         Animated.timing(playerPosition, {
-            toValue: 450,
+            toValue: 400,
             duration: 300,
             useNativeDriver: false,
             easing: Easing.linear,
@@ -172,7 +172,7 @@ export default function Cutscene_1() {
         setAnimateRheeyu(true);
         
         Animated.timing(rheeyuPosition, {
-            toValue: 150,
+            toValue: 180,
             duration: 300,
             useNativeDriver: false,
             easing: Easing.linear,
@@ -415,7 +415,7 @@ export default function Cutscene_1() {
                     style={[
                         animateNpc ? styles.walkingCharacterContainer : styles.standingCharacterContainer,
                         {
-                            left: -20,
+                            left: 0,
                             transform: [{ translateX: npcPosition }],
                             opacity: npcOpacity,
                         },
@@ -437,7 +437,8 @@ export default function Cutscene_1() {
                     style={[
                         animatePlayer ? styles.walkingCharacterContainer : styles.standingCharacterContainer,
                         {
-                            left: -20,
+                            left: -30,
+                            bottom: 250,
                             transform: [{ translateX: playerPosition }],
                         },
                     ]}
@@ -466,7 +467,7 @@ export default function Cutscene_1() {
                             opacity: paperTrashOpacity,
                             position: "absolute",
                             bottom: 250,
-                            left: 230,
+                            left: 200,
                             width: 110,
                             height: 100,
                         },
@@ -478,7 +479,7 @@ export default function Cutscene_1() {
                     style={[
                         animateRheeyu ? styles.walkingCharacterContainer : styles.standingCharacterContainer,
                         {
-                            left: -100,
+                            left: -120,
                             transform: [{ translateX: rheeyuPosition }],
                         },
                     ]}
@@ -528,7 +529,7 @@ export default function Cutscene_1() {
                             opacity: trashMonsterOpacity,
                             position: "absolute",
                             bottom: 260,
-                            left: 230,
+                            left: 200,
                             width: 90,
                             height: 100,
                         },
@@ -654,6 +655,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         height: 1000,
         width: 500,
+        bottom: 120,
     },
     container_inner: {
         backgroundColor: 'lightgray',
@@ -711,12 +713,14 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         width: '100%',
         paddingHorizontal: 40,
+        
     },
     backgroundimg_dialoguebox: {
         width: 395,
-        height: 200,
+        height: 220,
         flex: 1,
         right: 40,
+        marginLeft: 40
     },
     dialogueTouchableArea: {
         flex: 1,
@@ -735,28 +739,33 @@ const styles = StyleSheet.create({
         flex: 1,
         position: 'relative',
         paddingTop: 30,
+        left: 20,
         
     },
     character_name: {
         fontFamily: 'PixelifySans-Bold',
         fontSize: 25,
         color:'rgba(89, 32, 3, 0.85)',
-        marginLeft: 40,
+        marginLeft: 45,
+        bottom:10,
         zIndex: 1,
     },
     text_dialogue: {
         fontFamily: 'Stardew Valley',
         color:'rgba(104, 37, 3, 0.85)',
         fontSize: 24,
-        marginTop: 5,
+        marginTop: 1,
         marginBottom: 10,
-        marginLeft: 40,
+        marginLeft: 45,
+        marginRight: 40
     },
     portraitBesideDialog: {
         width: 165,
         height: 200,
         marginBottom: 0,
+        top:10,
         left: 30,
+        marginRight: 40
     },
     clickHint: {
         position: 'absolute',
@@ -767,7 +776,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Stardew Valley',
         color: 'rgba(0, 0, 0, 0.61)',
         backgroundColor: 'rgba(188, 154, 124, 0.61)',
-        paddingHorizontal: 10,
+        paddingHorizontal: 30,
         paddingVertical: 6,
         borderRadius: 8,
         opacity: 0.5,

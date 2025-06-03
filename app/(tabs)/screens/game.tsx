@@ -23,8 +23,8 @@ import { RootStackParamList } from '../types';
 type GameScreenNavigationProp = StackNavigationProp<RootStackParamList, 'GameMainMap'>;
 
 const TILE   = 48;
-const SPEED  = 210;
-const HOLD   = 20;
+const SPEED  = 10;
+const HOLD   = 10;
 const COLS   = 70;
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -626,7 +626,7 @@ function Game() {
     }, 3000);
   };
 
-  // Add temporary collision tiles for trash spawn points and active NPCs
+  // Add temporary collision tiles for active NPCs only (not trash)
   const activeCollisions = useMemo(() => {
     const collisions = [];
     
@@ -639,17 +639,11 @@ function Game() {
       });
     }
     
-    // Add trash spawn point collisions
-    for (const item of trash) {
-      collisions.push({
-        position: item.spawnCollision,
-        width: TILE,
-        height: TILE,
-      });
-    }
+    // No longer add trash collisions - players can walk through trash sprites
+    // This allows players to walk past/through trash items on the map
     
     return collisions;
-  }, [npcs, trash]);
+  }, [npcs]);
 
   // Update main game loop collision checks
   useEffect(() => {

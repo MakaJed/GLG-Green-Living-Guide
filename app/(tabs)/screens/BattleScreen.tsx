@@ -121,9 +121,34 @@ export default function BattleScreen({ route, navigation }: Props) {
   }
 
   const handleBattleEnd = (won: boolean) => {
-    // Go back to the previous screen instead of creating a new screen
-    // This ensures we return to the exact same game instance
-    navigation.goBack();
+    if (won && route.params?.enemy) {
+      // Map enemy type to trash type for mini-game
+      // Map to our updated trash types: metal, organic, paper, plastic, glass, electronic
+      const enemyToTrashType: Record<string, string> = {
+        canstruct: 'metal',
+        sarcan: 'metal',
+        crunchor: 'plastic',
+        phantompaper: 'paper',
+        paper_phantom: 'paper',
+        greezeglob: 'organic',
+        greeze_glob: 'organic',
+        gloofuud: 'organic',
+        egglut: 'organic',
+        rotato: 'organic',
+        jellstic: 'plastic',
+        bottroll: 'plastic',
+        cupkwek: 'plastic',
+        sssstrawpent: 'plastic',
+        shardlass: 'glass',
+        jar: 'glass',
+        phonii: 'electronic',
+        voltwing: 'electronic',
+      };
+      const trashType = enemyToTrashType[route.params.enemy.toLowerCase()] || 'plastic';
+      navigation.replace('MiniGameScreen', { trashType }); // type safe, MiniGameScreen expects { trashType: string }
+    } else {
+      navigation.goBack();
+    }
   };
 
   return (

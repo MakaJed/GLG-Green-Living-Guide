@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -82,13 +82,35 @@ const PET_CONFIGURATIONS = {
   },
 };
 
+import { useNavigation } from '@react-navigation/native';
+
 export default function TutorialScreen({ route }: Props) {
   const onTutorialComplete = route.params?.onTutorialComplete ?? (() => {});
   const [step, setStep] = useState<'intro' | 'select' | 'battle' | 'done'>('intro');
   const [selected, setSelected] = useState<string | null>(null);
+  // Track if the player has completed the mini-game
+  const [miniGameCompleted, setMiniGameCompleted] = useState(false);
 
   // Use Paper_Phantom as the fixed enemy for the tutorial battle
   const enemy = TrashMonsterFactory.createPaperPhantom(1);
+
+  // Add navigation using the useNavigation hook
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  
+  // Focus listener to detect when returning from MiniGameScreen
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // If the player has defeated the enemy but hasn't completed the mini-game flow yet
+      // This will happen when they return from the mini-game
+      if (step === 'battle' && !miniGameCompleted) {
+        setMiniGameCompleted(true);
+        setStep('done');
+        onTutorialComplete?.();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, step, miniGameCompleted]);
 
   const handleStartTutorial = () => setStep('select');
 
@@ -97,50 +119,58 @@ export default function TutorialScreen({ route }: Props) {
   };
 
   const handleBattleEnd = async (won: boolean) => {
-    // When the tutorial battle ends, save the selected pet as the main pet
-    if (selected) {
-      try {
-        const petName = selected;
-        
-        // Map the selected pet to one of our configured pets
-        let petType: 'Recyclotron' | 'Composter' | 'Toxaway';
-        
-        if (petName === 'Cubble') {
-          petType = 'Recyclotron';
-        } else if (petName === 'Owlleaf') {
-          petType = 'Composter';
-        } else { // Meowmblebee
-          petType = 'Toxaway';
-        }
-        
-        // Get the skills from our progression system
-        const initialSkills = PET_SKILL_PROGRESSION[petType].initialSkills;
-        const additionalSkills = PET_SKILL_PROGRESSION[petType].additionalSkills;
-        
-        // Create the pet with level 1 (will start with 2 skills)
-        const playerPet = new Creature(
-          petName,
-          EcoType[petType.toUpperCase() as keyof typeof EcoType], 
-          1, 
-          PET_BASE_STATS, 
-          initialSkills,
-          additionalSkills
-        );
-        
-        // Import the PetStorageService
-        const { saveMainPet } = require('../../../services/PetStorageService');
-        
-        // Save the pet as the main pet that will be used throughout the game
-        await saveMainPet(playerPet);
-        console.log(`Saved ${petName} as the main pet with level-based skill progression`);
-      } catch (error) {
-        console.error('Error saving main pet:', error);
+  // When the tutorial battle ends, save the selected pet as the main pet
+  if (selected) {
+    try {
+      const petName = selected;
+      
+      // Map the selected pet to one of our configured pets
+      let petType: 'Recyclotron' | 'Composter' | 'Toxaway';
+      
+      if (petName === 'Cubble') {
+        petType = 'Recyclotron';
+      } else if (petName === 'Owlleaf') {
+        petType = 'Composter';
+      } else { // Meowmblebee
+        petType = 'Toxaway';
       }
+      
+      // Get the skills from our progression system
+      const initialSkills = PET_SKILL_PROGRESSION[petType].initialSkills;
+      const additionalSkills = PET_SKILL_PROGRESSION[petType].additionalSkills;
+      
+      // Create the pet with level 1 (will start with 2 skills)
+      const playerPet = new Creature(
+        petName,
+        EcoType[petType.toUpperCase() as keyof typeof EcoType], 
+        1, 
+        PET_BASE_STATS, 
+        initialSkills,
+        additionalSkills
+      );
+      
+      // Import the PetStorageService
+      const { saveMainPet } = require('../../../services/PetStorageService');
+      
+      // Save the pet as the main pet that will be used throughout the game
+      await saveMainPet(playerPet);
+      console.log(`Saved ${petName} as the main pet with level-based skill progression`);
+
+      if (won) {
+        // Navigate to the mini-game screen after defeating the Paper Phantom
+        // Paper Phantom = paper trash type for sorting
+        navigation.navigate('MiniGameScreen', { trashType: 'paper' });
+        return; // Stop here to prevent setting step to 'done' immediately
+      }
+    } catch (error) {
+      console.error('Error saving main pet:', error);
     }
-    
-    setStep('done');
-    onTutorialComplete?.();
-  };
+  }
+  
+  // Only reach here if battle was lost or there was an error
+  setStep('done');
+  onTutorialComplete?.();
+};
 
   const renderIntro = () => (
     <>
@@ -225,8 +255,20 @@ export default function TutorialScreen({ route }: Props) {
   };
 
   const renderDone = () => (
+  <>
     <Text style={styles.title}>Tutorial Complete!</Text>
-  );
+    <TouchableOpacity
+      style={styles.startBtn}
+      onPress={() => {
+        onTutorialComplete?.();
+        // Navigate to the main game screen
+        navigation.replace('GameMainMap');
+      }}
+    >
+      <Text style={styles.startText}>Continue</Text>
+    </TouchableOpacity>
+  </>
+);
 
   return (
     <View style={styles.container}>
