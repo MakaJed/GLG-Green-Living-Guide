@@ -24,8 +24,8 @@ An educational pixel-art RPG designed to promote environmental awareness, eco-fr
 
 | Story Dialogue | Battle System |
 |---|---|
-| <img src="images/img (1).png" width="300"> | <img src="images/img (1).jpg" width="300"> |
-| <img src="images/img (2).png" width="300"> | <img src="images/img (3).jpg" width="300"> |
+| <img src="img (1).png" width="300"> | <img src="img (1).jpg" width="300"> |
+| <img src="img (2).png" width="300"> | <img src="img (3).jpg" width="300"> |
 
 ---
 
